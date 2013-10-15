@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class Article {
 
 	private String text;
@@ -20,6 +22,8 @@ public class Article {
 	}
 	
 	public void process(int windowRadius) {
+		
+		this.geniaXMLTerm = this.preprocess(this.geniaXMLTerm);
 		String[] sentences = geniaXMLTerm.split("(\\. |, |\n)");
 		for (String sentence : sentences) {
 			List<String> res = processSentence(sentence);
@@ -53,26 +57,26 @@ public class Article {
 						}
 					}
 				}
-				System.out.println(full);
-				System.out.println(id);
-				System.out.println(name);
-				System.out.println(head);
-				System.out.println(tail);
-				System.out.println(contextWords);
+//				System.out.println(full);
+//				System.out.println(id);
+//				System.out.println(name);
+//				System.out.println(head);
+//				System.out.println(tail);
+//				System.out.println(contextWords);
 				
 				Term term = new Term(id, name); 
 				ContextVector contextVector = new ContextVector(contextWords);
 				if (this.termAndContextVector.containsKey(term)) {
 					ContextVector value = this.termAndContextVector.get(term);
-					ContextVector newValue = value.add(contextVector);
-					this.termAndContextVector.put(term, newValue);
+					value.add(contextVector);
+					this.termAndContextVector.put(term, value);
 				}
 				else {
 					this.termAndContextVector.put(term, contextVector);
 				}
 				
-				System.out.println(contextVector);
-				System.out.println();
+//				System.out.println(contextVector);
+//				System.out.println();
 				
 				res = this.processSentence(tail);
 			}
@@ -80,7 +84,7 @@ public class Article {
 	}
 	
 	public List<String> processSentence(String sentence) {
-		if (sentence != null) {
+		if (sentence != null && !StringUtils.equals(sentence, "")) {
 			String regex = "^(.*)<term sem=\"(.*)\">(\\w+)<\term>.*$";
 			regex = "^(.*?)<term sem=\"(.*?)\">(.*?)</term>(.*)$";
 			Pattern p = Pattern.compile(regex);
@@ -130,6 +134,33 @@ public class Article {
 	
 	public Map<Term, ContextVector> getTermAndContextVector(){
 		return this.termAndContextVector;
+	}
+	
+	public String preprocess(String s) {
+		s = this.preprocess1(s);
+		s = this.preprocess2(s);
+		s = this.preprocess3(s);
+		
+		return s;
+	}
+	
+	public String preprocess1(String s) {
+		s = s.replaceAll("\\[\\d+\\]", "");
+		
+		return s;
+	}
+	
+	public String preprocess2(String s) {
+		s = s.toLowerCase();
+		
+		return s;
+	}
+	
+	public String preprocess3(String s) {
+		s = s.replaceAll("\\(", ".");
+		s = s.replaceAll("\\)", ".");
+		
+		return s;
 	}
 
 }
