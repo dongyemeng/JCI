@@ -37,22 +37,12 @@ public class ContextVector {
 		}
 	}
 	
-	public ContextVector add(ContextVector cv) {
-		ContextVector newCV = new ContextVector();
-		
-		Iterator<Entry<String, Integer>> iter = this.getIterator();
+	public void add(ContextVector cv) {
+		Iterator<Entry<String, Integer>> iter = cv.getIterator();
 		while (iter.hasNext()) {
 			Entry<String, Integer> e = iter.next();
-			newCV.addWord(e.getKey(), e.getValue());
-		}
-		
-		Iterator<Entry<String, Integer>> iter2 = cv.getIterator();
-		while (iter2.hasNext()) {
-			Entry<String, Integer> e = iter2.next();
-			newCV.addWord(e.getKey(), e.getValue());
-		}
-		
-		return newCV;		
+			this.addWord(e.getKey(), e.getValue());
+		}		
 	}
 	
 	public Iterator<Entry<String, Integer>> getIterator() {
@@ -65,8 +55,9 @@ public class ContextVector {
 		SortedSet<String> keys = new TreeSet<String>(this.vector.keySet());
 		for (String key : keys) { 
 		   int value = this.vector.get(key);
-		   s = s + String.format("(%s, %d)", key, value);
+		   s = s + String.format("[\"%s\": %d],", key, value);
 		}
+		s = s.substring(0, s.length() - 1);
 		s = s+"]\n";
 		
 		
