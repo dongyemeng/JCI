@@ -18,10 +18,11 @@ public class test {
 		CRAFT myCRAFT = new CRAFT(dir);
 		List<String> ids = myCRAFT.getArticleIDs();
 		for (String id : ids) {
-		Article myArticle = myCRAFT.getArticle(id);
-		
-		myArticle.process();
+			Article myArticle = myCRAFT.getArticle(id);
+			myArticle.process(3);
 		}
+		
+		
 
 	}
 

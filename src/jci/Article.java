@@ -1,7 +1,9 @@
 package jci;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,12 +13,13 @@ public class Article {
 	private String geniaXMLTerm;
 	private List<Term> terms;
 	
+	private Map<Term, ContextVector> termAndContextVector = new HashMap<Term, ContextVector>();
+	
 	public Article(String gTerm) {
 		this.geniaXMLTerm = gTerm;
 	}
 	
-	public void process() {
-		int windowRadius = 3;
+	public void process(int windowRadius) {
 		String[] sentences = geniaXMLTerm.split("(\\. |, |\n)");
 		for (String sentence : sentences) {
 			List<String> res = processSentence(sentence);
@@ -57,19 +60,23 @@ public class Article {
 				System.out.println(tail);
 				System.out.println(contextWords);
 				
-				
+				Term term = new Term(id, name); 
 				ContextVector contextVector = new ContextVector(contextWords);
+				if (this.termAndContextVector.containsKey(term)) {
+					ContextVector value = this.termAndContextVector.get(term);
+					ContextVector newValue = value.add(contextVector);
+					this.termAndContextVector.put(term, newValue);
+				}
+				else {
+					this.termAndContextVector.put(term, contextVector);
+				}
+				
 				System.out.println(contextVector);
 				System.out.println();
 				
 				res = this.processSentence(tail);
 			}
 		}
-	}
-	
-	public List<Term> getTerms() {
-		List<Term> terms = new ArrayList<Term>();
-		return terms;
 	}
 	
 	public List<String> processSentence(String sentence) {
@@ -106,8 +113,6 @@ public class Article {
 		}
 		return null;
 		
-		
-		
 	}
 	
 	public String removeAnnotation(String sentence) {
@@ -115,6 +120,16 @@ public class Article {
 		sentence = sentence.replaceAll("</term.*?>", "");
 		
 		return sentence;
+	}
+	
+	
+	public List<Term> getTerms() {
+		List<Term> terms = new ArrayList<Term>();
+		return terms;
+	}
+	
+	public Map<Term, ContextVector> getTermAndContextVector(){
+		return this.termAndContextVector;
 	}
 
 }
