@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CRAFT {
@@ -19,6 +20,24 @@ public class CRAFT {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
+	}
+	
+	public List<String> getArticleIDs() {
+		List<String> ids = new ArrayList<String>();
+		String pmidsDir = this.dir + "/articles/ids/craft-pmids-release";
+		File pmidsFile = new File(pmidsDir);
+		
+		try {
+			List<String> lines = Files.readAllLines(pmidsFile.toPath(), Charset.forName("UTF-8"));
+			for (String line : lines) {
+				ids.add(line);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return ids;
 	}
 	
 	public Article getArticle(String id) {

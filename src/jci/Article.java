@@ -36,12 +36,18 @@ public class Article {
 				List<String> contextWords = new ArrayList<String>();
 				for (int i = 0; i < windowRadius; i++) {
 					if (headWords.length-i-1>=0) {
-						contextWords.add(headWords[headWords.length-i-1]);
+						String w = headWords[headWords.length-i-1];
+						if (w != null && !w.equals("")) {
+							contextWords.add(w);
+						}
 					}
 				}
 				for (int i = 0; i < windowRadius; i++) {
 					if (i < tailWords.length) {
-						contextWords.add(tailWords[i]);
+						String w = tailWords[i];
+						if (w != null && !w.equals("")) {
+							contextWords.add(w);
+						}
 					}
 				}
 				System.out.println(full);
@@ -50,6 +56,10 @@ public class Article {
 				System.out.println(head);
 				System.out.println(tail);
 				System.out.println(contextWords);
+				
+				
+				ContextVector contextVector = new ContextVector(contextWords);
+				System.out.println(contextVector);
 				System.out.println();
 				
 				res = this.processSentence(tail);

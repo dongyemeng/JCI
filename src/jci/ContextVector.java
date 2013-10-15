@@ -5,12 +5,19 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class ContextVector {
 	private Map<String, Integer> vector;
 	
 	public ContextVector() {
 		vector = new HashMap<String, Integer>();
+	}
+	
+	public ContextVector(Collection<String> c) {
+		vector = new HashMap<String, Integer>();
+		this.addAll(c);
 	}
 	
 	public void addWord(String word, int count) {
@@ -50,6 +57,20 @@ public class ContextVector {
 	
 	public Iterator<Entry<String, Integer>> getIterator() {
 		return this.vector.entrySet().iterator();
+	}
+	
+	@Override
+	public String toString(){
+		String s="[";
+		SortedSet<String> keys = new TreeSet<String>(this.vector.keySet());
+		for (String key : keys) { 
+		   int value = this.vector.get(key);
+		   s = s + String.format("(%s, %d)", key, value);
+		}
+		s = s+"]\n";
+		
+		
+		return s;
 	}
 	
 
