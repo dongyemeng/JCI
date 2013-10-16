@@ -25,7 +25,7 @@ public class test {
 		String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 		CRAFT myCRAFT = new CRAFT(dir);
 		List<String> ids = myCRAFT.getArticleIDs();
-		int windowSize = 6;
+		int windowSize = 10;
 		Map<Term, ContextVector> termAndContextVector = new HashMap<Term, ContextVector>();
 		for (String id : ids) {
 			Article myArticle = myCRAFT.getArticle(id);

@@ -50,8 +50,9 @@ public class CRAFT {
 		String geniaXMLTerm = "";
 		try {
 			List<String> lines = Files.readAllLines(geniaXMLTermFile.toPath(), Charset.forName("UTF-8"));
-			for (String line : lines) {
-				geniaXMLTerm = geniaXMLTerm + "\n" + line;
+//			for (String line : lines) {
+			for (int i = 1; i < lines.size(); i++) {
+				geniaXMLTerm = geniaXMLTerm + "\n" + lines.get(i);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

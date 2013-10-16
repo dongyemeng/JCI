@@ -24,8 +24,10 @@ public class Article {
 	public void process(int windowRadius) {
 		
 		this.geniaXMLTerm = this.preprocess(this.geniaXMLTerm);
-		String[] sentences = geniaXMLTerm.split("(\\. |, |\n)");
+//		String[] sentences = geniaXMLTerm.split("(\\. |, |\n)");
+		String[] sentences = geniaXMLTerm.split("(\\.|\n)");
 		for (String sentence : sentences) {
+			if (!StringUtils.equals(sentence, "")) {
 			List<String> res = processSentence(sentence);
 			while (res != null) {
 				String id = res.get(0);
@@ -37,6 +39,10 @@ public class Article {
 				
 				String rawHead = this.removeAnnotation(head);
 				String rawTail = this.removeAnnotation(tail);
+				rawHead = rawHead.replaceAll("\\W+", " ");
+				rawTail = rawTail.replaceAll("\\W+", " ");
+				rawHead = this.trimString(rawHead);
+				rawTail = this.trimString(rawTail);
 				String[] headWords = rawHead.split("\\s+");
 				String[] tailWords = rawTail.split("\\s+");
 				
@@ -80,11 +86,14 @@ public class Article {
 				
 				res = this.processSentence(tail);
 			}
+			}
 		}
 	}
 	
 	public List<String> processSentence(String sentence) {
 		if (sentence != null && !StringUtils.equals(sentence, "")) {
+			
+			
 			String regex = "^(.*)<term sem=\"(.*)\">(\\w+)<\term>.*$";
 			regex = "^(.*?)<term sem=\"(.*?)\">(.*?)</term>(.*)$";
 			Pattern p = Pattern.compile(regex);
@@ -157,8 +166,15 @@ public class Article {
 	}
 	
 	public String preprocess3(String s) {
-		s = s.replaceAll("\\(", ".");
-		s = s.replaceAll("\\)", ".");
+		s = s.replaceAll("\\(", " ");
+		s = s.replaceAll("\\)", " ");
+		
+		return s;
+	}
+	
+	public String trimString(String s) {
+		s = s.replaceAll("^\\s+", "");
+		s = s.replaceAll("\\s+$", "");
 		
 		return s;
 	}
