@@ -13,9 +13,9 @@ public class Article {
 
 	private String text;
 	private String geniaXMLTerm;
-	private List<Term> terms;
+	private List<TermIDName> terms;
 	
-	private Map<Term, ContextVector> termAndContextVector = new HashMap<Term, ContextVector>();
+	private Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
 	
 	public Article(String gTerm) {
 		this.geniaXMLTerm = gTerm;
@@ -25,6 +25,11 @@ public class Article {
 		
 		this.geniaXMLTerm = this.preprocess(this.geniaXMLTerm);
 //		String[] sentences = geniaXMLTerm.split("(\\. |, |\n)");
+		
+		geniaXMLTerm = TextProcessor.removeStopWords(geniaXMLTerm);
+		geniaXMLTerm = TextProcessor.mergeSpace(geniaXMLTerm);
+		geniaXMLTerm = TextProcessor.trim(geniaXMLTerm);
+		
 		String[] sentences = geniaXMLTerm.split("(\\.|\n)");
 		for (String sentence : sentences) {
 			if (!StringUtils.equals(sentence, "")) {
@@ -70,7 +75,7 @@ public class Article {
 //				System.out.println(tail);
 //				System.out.println(contextWords);
 				
-				Term term = new Term(id, name); 
+				TermIDName term = new TermIDName(id, name); 
 				ContextVector contextVector = new ContextVector(contextWords);
 				if (this.termAndContextVector.containsKey(term)) {
 					ContextVector value = this.termAndContextVector.get(term);
@@ -136,12 +141,12 @@ public class Article {
 	}
 	
 	
-	public List<Term> getTerms() {
-		List<Term> terms = new ArrayList<Term>();
+	public List<TermIDName> getTerms() {
+		List<TermIDName> terms = new ArrayList<TermIDName>();
 		return terms;
 	}
 	
-	public Map<Term, ContextVector> getTermAndContextVector(){
+	public Map<TermIDName, ContextVector> getTermAndContextVector(){
 		return this.termAndContextVector;
 	}
 	

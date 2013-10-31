@@ -1,13 +1,25 @@
 package jci;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import weka.core.Stopwords;
+
+import org.biojava.bio.Annotation;
+import org.biojava.ontology.Ontology;
+import org.biojava.ontology.Term;
+import org.biojava.ontology.io.OboParser;
 
 public class TextProcessor {
 	
@@ -39,9 +51,10 @@ public class TextProcessor {
 	}
 	
 	public static String removeStopWords(String s){
-//		OboParser parser = new OboParser();
+
 		
 		Stopwords swords = new Stopwords();
+		swords.remove("go");
 		
 		Enumeration swEnum = swords.elements();
 		StringBuilder sb = new StringBuilder();
@@ -58,7 +71,7 @@ public class TextProcessor {
 		String swPattern = sb.toString();
 		
 		s = s.replaceAll(swPattern, "");
-		System.out.println(sb.toString());
+//		System.out.println(sb.toString());
 		return s;
 	}
 
@@ -95,6 +108,41 @@ public class TextProcessor {
 		
 		String s1 = removeStopWords(s);
 		System.out.println(s);
+		
+//		OboParser parser = new OboParser();
+//
+//		InputStream inStream = null;
+//		try {
+//			inStream = new FileInputStream("C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\Go.obo");
+//		} catch (FileNotFoundException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//	 
+//		BufferedReader oboFile = new BufferedReader ( new InputStreamReader ( inStream ) );
+//			try {
+//				Ontology ontology = parser.parseOBO(oboFile, "my Ontology name", "description of ontology");
+//	 
+//				Set<Term> keys = ontology.getTerms();
+//				Term termx = ontology.getTerm("GO:0016301");
+//				String name = termx.getName();
+//				String des = termx.getDescription();
+//				Annotation ann = termx.getAnnotation();
+//				Object[] sym = termx.getSynonyms();
+//				Iterator iter = keys.iterator();
+//				while (iter.hasNext()){
+//					Term term = (Term) iter.next();
+//					System.out.println("TERM: " + term.getName());
+//					System.out.println("Description: " + term.getDescription());
+//					System.out.println(term.getAnnotation());
+//					Object[] synonyms =  term.getSynonyms();
+//					for ( Object syn : synonyms ) {
+//						System.out.println(syn);
+//					}					
+//				}			
+//			} catch (Exception e){
+//				e.printStackTrace();
+//			}
 	}
 
 }

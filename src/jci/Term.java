@@ -1,55 +1,36 @@
 package jci;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-public class Term implements Comparable<Term>{
-	private String ID;
-	private String name;
-	public Term(String id, String n) {
-		this.ID = id;
-		this.name = n;
-	}
-
-	
-	@Override
-	public boolean equals(Object obj){
-		if (obj==this){
-			return true;
+public class Term {
+		String id;
+		String name;
+		String def;
+		public Set<String> children = new HashSet<String>();
+		public Set<String> is_a = new HashSet<String>();
+		
+		public String getID() {
+			return this.id;
 		}
-		
-		if (obj==null||obj.getClass()!=this.getClass()){
-			return false;
+
+		int depth(Map<String, Term> id2term) {
+			int min_child = 0;
+			for (String p : is_a) {
+				Term parent = id2term.get(p);
+				if (parent == null) {
+					System.err.println("Cannot get " + p);
+					continue;
+				}
+				int n2 = parent.depth(id2term);
+				if (min_child == 0 || n2 < min_child)
+					min_child = n2;
+			}
+			return 1 + min_child;
 		}
-		
-		Term myTerm = (Term) obj;
-		
-		return StringUtils.equals(ID, myTerm.ID);
-	}
-	
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(13, 37)
-		.append(this.ID)
-		.toHashCode();
-	}
-	
-	@Override
-	public String toString() {
-		String termString = "\n"
-				+ "Term:\n"
-				+ "\tID: " + this.ID + "\n"
-				+ "\tName: " + this.name + "\n" 
-				+ "\n";
 
-		return termString;
+		public String toString() {
+			return id + "\t" + name + "\t" + is_a;
+		}
 	}
-
-
-	@Override
-	public int compareTo(Term t) {
-		return this.ID.compareTo(t.ID);
-	}
-	
-
-}

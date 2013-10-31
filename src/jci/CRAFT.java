@@ -9,9 +9,19 @@ import java.util.List;
 
 public class CRAFT {
 	private String dir;
+	public Biostar45366 app;
 
 	public CRAFT(String d) {
 		this.dir = d;
+		app = new Biostar45366();
+		try {
+			app.parse("C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\Go.obo");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 
 	/**
