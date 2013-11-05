@@ -62,7 +62,7 @@ public class test {
 				System.out.println("\tParent:");
 				System.out.println("\t"+parent);
 				System.out.println(termAndContextVector.get(new TermIDName(parent, "")).toString());
-				System.out.println("\tChild:");
+				System.out.println("\tChild:"); 
 				System.out.println("\t"+term.getID());
 				System.out.println(termAndContextVector.get(new TermIDName(term.getID(), "")).toString());
 				}
