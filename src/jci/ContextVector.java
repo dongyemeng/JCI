@@ -9,7 +9,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class ContextVector {
-	private Map<String, Integer> vector;
+	public Map<String, Integer> vector;
 	
 	public ContextVector() {
 		vector = new HashMap<String, Integer>();
