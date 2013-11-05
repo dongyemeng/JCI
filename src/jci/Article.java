@@ -16,8 +16,15 @@ public class Article {
 	private List<TermIDName> terms;
 	
 	private Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
+	private OpenNLPTokenizer myTokenizer;
+	private OpenNLPSentencesTokenizer mySentenceDetector;
+	
 	
 	public Article(String gTerm) {
+		String openNLPSentenceDetectorDir = "res//en-sent.bin";
+		String openNLPTokenizerDir = "res//en-token.bin";
+		this.mySentenceDetector = new OpenNLPSentencesTokenizer(openNLPSentenceDetectorDir);
+		this.myTokenizer = new OpenNLPTokenizer(openNLPTokenizerDir);
 		this.geniaXMLTerm = gTerm;
 	}
 	
@@ -27,10 +34,11 @@ public class Article {
 //		String[] sentences = geniaXMLTerm.split("(\\. |, |\n)");
 		
 		geniaXMLTerm = TextProcessor.removeStopWords(geniaXMLTerm);
+//		geniaXMLTerm = TextProcessor.handleDigits(geniaXMLTerm);
 		geniaXMLTerm = TextProcessor.mergeSpace(geniaXMLTerm);
 		geniaXMLTerm = TextProcessor.trim(geniaXMLTerm);
 		
-		String[] sentences = geniaXMLTerm.split("(\\.|\n)");
+		List<String> sentences = this.mySentenceDetector.tokenize(geniaXMLTerm);
 		for (String sentence : sentences) {
 			if (!StringUtils.equals(sentence, "")) {
 			List<String> res = processSentence(sentence);
@@ -44,25 +52,38 @@ public class Article {
 				
 				String rawHead = this.removeAnnotation(head);
 				String rawTail = this.removeAnnotation(tail);
-				rawHead = rawHead.replaceAll("\\W+", " ");
-				rawTail = rawTail.replaceAll("\\W+", " ");
-				rawHead = this.trimString(rawHead);
-				rawTail = this.trimString(rawTail);
-				String[] headWords = rawHead.split("\\s+");
-				String[] tailWords = rawTail.split("\\s+");
+//				rawHead = rawHead.replaceAll("\\W+", " ");
+//				rawTail = rawTail.replaceAll("\\W+", " ");
+//				rawHead = this.trimString(rawHead);
+//				rawTail = this.trimString(rawTail);
+				
+				rawHead = TextProcessor.trim(rawHead);
+				rawTail = TextProcessor.trim(rawTail);
+				rawHead = TextProcessor.handleDigits(rawHead);
+				rawTail = TextProcessor.handleDigits(rawTail);
+				
+//				String[] headWords = rawHead.split("\\s+");
+//				String[] tailWords = rawTail.split("\\s+");
+				
+				List<String> headWords = this.myTokenizer.tokenize(rawHead);
+				List<String> tailWords = this.myTokenizer.tokenize(rawTail);
 				
 				List<String> contextWords = new ArrayList<String>();
 				for (int i = 0; i < windowRadius; i++) {
-					if (headWords.length-i-1>=0) {
-						String w = headWords[headWords.length-i-1];
+//					if (headWords.length-i-1>=0) {
+//						String w = headWords[headWords.length-i-1];
+					if (headWords.size() - i -1 >= 0) {
+						String w = headWords.get(headWords.size()-i-1);
 						if (w != null && !w.equals("")) {
 							contextWords.add(w);
 						}
 					}
 				}
 				for (int i = 0; i < windowRadius; i++) {
-					if (i < tailWords.length) {
-						String w = tailWords[i];
+//					if (i < tailWords.length) {
+//						String w = tailWords[i];
+					if (i < tailWords.size()) {
+						String w = tailWords.get(i);
 						if (w != null && !w.equals("")) {
 							contextWords.add(w);
 						}

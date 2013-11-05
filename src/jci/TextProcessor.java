@@ -74,6 +74,13 @@ public class TextProcessor {
 //		System.out.println(sb.toString());
 		return s;
 	}
+	
+	public static String handleDigits(String s) {
+		String regex = "\\b\\d+\\b";
+		s = s.replaceAll(regex, "0");
+		
+		return s;
+	}
 
 	/**
 	 * @param args

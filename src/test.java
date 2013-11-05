@@ -66,6 +66,8 @@ public class test {
 				System.out.println("\t"+term.getID());
 				System.out.println(termAndContextVector.get(new TermIDName(term.getID(), "")).toString());
 				}
+				
+				
 			}
 			}
 		}
