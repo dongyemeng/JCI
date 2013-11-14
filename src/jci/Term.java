@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class Term {
-		String id;
-		String name;
-		String def;
+		public String id;
+		public String name;
+		public String def;
 		public Set<String> children = new HashSet<String>();
 		public Set<String> is_a = new HashSet<String>();
 		
@@ -15,7 +15,7 @@ public class Term {
 			return this.id;
 		}
 
-		int depth(Map<String, Term> id2term) {
+		public int depth(Map<String, Term> id2term) {
 			int min_child = 0;
 			for (String p : is_a) {
 				Term parent = id2term.get(p);

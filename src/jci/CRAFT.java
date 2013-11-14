@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+import utility.Biostar45366;
+
 public class CRAFT {
 	private String dir;
 	public Biostar45366 app;
@@ -16,12 +18,11 @@ public class CRAFT {
 		app = new Biostar45366();
 		try {
 			app.parse("C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\Go.obo");
+//			app.parse("C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\CHEBI.obo");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 	}
 
 	/**
@@ -54,7 +55,10 @@ public class CRAFT {
 		String path = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0/README.txt";
 		
 		path = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0/genia-xml/term/go_cc/11532192.txt";
-		path = this.dir+"/genia-xml/term/go_cc/"+id+".txt.xml";
+//		path = this.dir+"/genia-xml/term/go_cc/"+id+".txt.xml";
+		path = this.dir+"/genia-xml/term/go_bpmf/"+id+".txt.xml";
+		
+//		path = this.dir+"/genia-xml/term/chebi/"+id+".txt.xml";
 		//File geniaXMLTermFile = new File(this.dir+"/genia-xml/term/go_cc/"+id+".txt.xml");
 		File geniaXMLTermFile = new File(path);
 		String geniaXMLTerm = "";

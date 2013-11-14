@@ -9,6 +9,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import utility.OpenNLPSentencesTokenizer;
+import utility.OpenNLPTokenizer;
+
 public class Article {
 
 	private String text;

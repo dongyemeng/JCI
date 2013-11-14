@@ -49,6 +49,17 @@ public class ContextVector {
 		return this.vector.entrySet().iterator();
 	}
 	
+	public int getCount() {
+		int count = 0;
+		Iterator<Entry<String, Integer>> iter = vector.entrySet().iterator();
+		while (iter.hasNext()) {
+			Entry<String, Integer> entry = iter.next();
+			count += entry.getValue();			
+		}
+		
+		return count;
+	}
+	
 	@Override
 	public String toString(){
 		String s="[";
