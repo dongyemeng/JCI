@@ -7,18 +7,29 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import utility.Biostar45366;
 
 public class CRAFT {
 	private String dir;
+	private String ontologyName;
 	public Biostar45366 app;
 
-	public CRAFT(String d) {
+	public CRAFT(String d, String oName) {
 		this.dir = d;
+		this.ontologyName = oName;
 		app = new Biostar45366();
 		try {
-			app.parse("C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\Go.obo");
+//			app.parse("C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\Go.obo");
 //			app.parse("C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\CHEBI.obo");
+			String oNameTemp = ""+this.ontologyName;
+			if (StringUtils.equals(this.ontologyName.toLowerCase(), "go_bpmf") || StringUtils.equals(this.ontologyName.toLowerCase(), "go_cc")) {
+				oNameTemp = "GO";
+			}
+			String fullPath = "C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\"
+					+ oNameTemp + ".obo";
+			app.parse(fullPath);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -56,9 +67,11 @@ public class CRAFT {
 		
 		path = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0/genia-xml/term/go_cc/11532192.txt";
 //		path = this.dir+"/genia-xml/term/go_cc/"+id+".txt.xml";
-		path = this.dir+"/genia-xml/term/go_bpmf/"+id+".txt.xml";
+//		path = this.dir+"/genia-xml/term/go_bpmf/"+id+".txt.xml";
 		
 //		path = this.dir+"/genia-xml/term/chebi/"+id+".txt.xml";
+		
+		path = this.dir+"/genia-xml/term/"+this.ontologyName.toLowerCase()+"/"+id+".txt.xml";
 		//File geniaXMLTermFile = new File(this.dir+"/genia-xml/term/go_cc/"+id+".txt.xml");
 		File geniaXMLTermFile = new File(path);
 		String geniaXMLTerm = "";

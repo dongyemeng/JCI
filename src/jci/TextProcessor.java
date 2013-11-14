@@ -55,6 +55,7 @@ public class TextProcessor {
 		
 		Stopwords swords = new Stopwords();
 		swords.remove("go");
+		swords.remove("so");
 		
 		Enumeration swEnum = swords.elements();
 		StringBuilder sb = new StringBuilder();

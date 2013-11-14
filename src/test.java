@@ -43,10 +43,17 @@ public class test {
 		boolean task1_scatter = true;
 		boolean task2 = false;
 		boolean task3 = false;
+		
+		String ontologyName = "CHEBI";
+		ontologyName = "CL";
+		ontologyName = "GO_BPMF";
+//		ontologyName = "NCBITaxon";
+		ontologyName = "PR";
+		ontologyName = "SO";
 
 		if (task1) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
-			CRAFT myCRAFT = new CRAFT(dir);
+			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
 			List<String> ids = myCRAFT.getArticleIDs();
 			int windowSize = 10;
 			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
@@ -138,7 +145,7 @@ public class test {
 			
 			if (task1_scatter) {
 				Plotter myPlotter = new Plotter();
-				myPlotter.makeScatter("parent_vs_child_GO_BPMF.png", xData, yData, "GO BPMF Parent-Child Pairs", "GO BPMF", true);
+				myPlotter.makeScatter("parent_vs_child_"+ontologyName.toUpperCase()+".png", xData, yData, ontologyName.toUpperCase()+" Parent-Child Pairs", ontologyName, true);
 			}
 		}
 
