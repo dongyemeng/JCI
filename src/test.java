@@ -2,10 +2,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.SortedSet;
@@ -26,6 +29,7 @@ import jci.CRAFT;
 import jci.ContextVector;
 import jci.Term;
 import jci.TermIDName;
+import jci.TermOccurrence;
 
 public class test {
 
@@ -39,16 +43,18 @@ public class test {
 	 */
 	public static void main(String[] args) throws IOException {
 
-		boolean task1 = true;
-		boolean task1_scatter = true;
+		boolean task1 = false;
+		boolean task1_scatter = false;
 		boolean task2 = false;
 		boolean task3 = false;
+		boolean task4 = false;
+		boolean task5 = true;
 		
 		String ontologyName = "CHEBI";
 		ontologyName = "CL";
 		ontologyName = "GO_BPMF";
 //		ontologyName = "NCBITaxon";
-		ontologyName = "PR";
+//		ontologyName = "PR";
 		ontologyName = "SO";
 
 		if (task1) {
@@ -134,8 +140,13 @@ public class test {
 
 //							myPlot.makeChart(name1, cv1, name2, cv2, "chart");
 							
-							int x = cv1.getCount();
-							int y = cv2.getCount();
+							double x = cv1.getCount();
+							
+							double y = cv2.getCount();
+							
+							x = Math.log(x);
+							y =  Math.log(y);
+							
 							xData.add(x);
 							yData.add(y);
 						}
@@ -215,6 +226,150 @@ public class test {
 			chart.addSeries("Gaussian Blob", xData, yData);
 			new SwingWrapper(chart).displayChart();
 		}
+		
+		if (task4) {
+			double[] recall = new double[] 
+					{ 1.0 / 7.0, 	2.0 / 7.0, 	2.0 / 7.0, 	4.0 / 7.0, 	4.0 / 7.0, 	6.0 / 7.0, 	6.0 / 7.0,	7.0 / 7.0 };
+			double[] precision = new double[] 
+					{ 1.0,     		1.0,     	4.0 / 5.0, 	4.0 / 5.0, 	3.0 / 4.0, 	3.0 / 4.0, 	7.0 / 10.0, 7.0 / 10.0 };
+
+			// Create Chart
+			Chart chart = QuickChart.getChart("Precision-Recall Curve",
+					"Recall", "Precision", "precision-recall curve", recall,
+					precision);
+
+			chart.getStyleManager().setXAxisMin(1.0 / 7.0);
+			chart.getStyleManager().setXAxisMax(1.0);
+			chart.getStyleManager().setYAxisMin(0);
+			chart.getStyleManager().setYAxisMax(1.0);
+			
+			// Show it
+			new SwingWrapper(chart).displayChart();
+
+			// Save it
+			BitmapEncoder.savePNG(chart, "./Sample_Chart.png");
+		}
+		
+		if (task5) {
+			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
+			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
+			List<String> ids = myCRAFT.getArticleIDs();
+			int windowSize = 10;
+			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
+			List<TermOccurrence> occurrences = new LinkedList<TermOccurrence>(); 
+			for (String id : ids) {
+				Article myArticle = myCRAFT.getArticle(id);
+				myArticle.process(windowSize / 2);
+				occurrences.addAll(myArticle.occurrences);
+				
+			}
+			Map<String, Set<String>> dict = getDict(occurrences);
+			Map<String, List<TermOccurrence>> dict2 = getDict2(occurrences);
+			Map<String, Set<String>> dup = getDuplicates(dict);
+			Map<String, Map<String, List<TermOccurrence>>> dup2 = getDuplicates2(dict2, dup);
+			
+			printStat(dup2);
+			
+			System.out.println();
+			
+		}
+	}
+	
+
+
+	private static void printStat(
+			Map<String, Map<String, List<TermOccurrence>>> dup2) {
+		Iterator<String> iter = dup2.keySet().iterator();
+		while (iter.hasNext()) {
+			String name = iter.next();
+			Map<String, List<TermOccurrence>> map = dup2.get(name);
+			System.out.println("[Name] "+name);
+			Iterator<String> idIter = map.keySet().iterator();
+			while (idIter.hasNext()) {
+				String id = idIter.next();
+				List<TermOccurrence> ocrs = map.get(id);
+				System.out.println("\t[ID] "+id);
+				System.out.println("\t[Num] "+ocrs.size());
+				System.out.println();
+			}
+		}
+		
+	}
+
+	public static Map<String, Set<String>> getDuplicates(Map<String, Set<String>> dict) {
+		Map<String,Set<String>> dup = new HashMap<String, Set<String>>();
+		Iterator<String> iter = dict.keySet().iterator();
+		while (iter.hasNext()) {
+			String name = iter.next();
+			Set<String> ids = dict.get(name);
+			if (ids.size() > 1) {
+				dup.put(name, ids);
+			}
+		}
+		
+		return dup;
+	}
+	
+	private static Map<String, Map<String, List<TermOccurrence>>> getDuplicates2(
+			Map<String, List<TermOccurrence>> dict2,
+			Map<String, Set<String>> dup) {
+		HashMap<String, Map<String, List<TermOccurrence>>> res = new HashMap<String, Map<String, List<TermOccurrence>>>();
+		
+		Iterator<String> iter = dup.keySet().iterator();
+		while (iter.hasNext()) {
+			String name = iter.next();
+			List<TermOccurrence> ocrs = dict2.get(name);
+			Map<String, List<TermOccurrence>> map = new HashMap<String, List<TermOccurrence>>();
+			for (TermOccurrence ocr : ocrs) {
+				String id = ocr.id;
+				if (map.containsKey(id)) {
+					map.get(id).add(ocr);
+				}
+				else {
+					List<TermOccurrence> ocrList = new ArrayList<TermOccurrence>();
+					ocrList.add(ocr);
+					map.put(id, ocrList);
+				}
+			}
+			res.put(name, map);
+		}
+		
+		return res;
+	}
+
+	public static Map<String, Set<String>> getDict(List<TermOccurrence> occurrences) {
+		Map<String,Set<String>> dict = new HashMap<String, Set<String>>();
+		for (TermOccurrence ocr : occurrences) {
+			String id = ocr.id;
+			String name = ocr.name;
+			if (dict.containsKey(name)) {
+				dict.get(name).add(id);
+			}
+			else {
+				Set<String> ids = new HashSet<String>();
+				ids.add(id);
+				dict.put(name, ids);
+			}
+		}
+		
+		return dict;		
+	}
+	
+	public static Map<String, List<TermOccurrence>> getDict2(List<TermOccurrence> occurrences) {
+		Map<String, List<TermOccurrence>> dict = new HashMap<String, List<TermOccurrence>>();
+		for (TermOccurrence ocr : occurrences) {
+			String name = ocr.name;
+			if (dict.containsKey(name)) {
+				dict.get(name).add(ocr);
+			}
+			else {
+				List<TermOccurrence> ocrs = new ArrayList<TermOccurrence>();
+				ocrs.add(ocr);
+				dict.put(name, ocrs);
+			}
+		}
+		
+		return dict;		
 	}
 
 	public static void termAndContextVectorAddition(
