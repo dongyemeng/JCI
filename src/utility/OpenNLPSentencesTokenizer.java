@@ -36,12 +36,16 @@ public class OpenNLPSentencesTokenizer implements CTokenizer{
 
 	@Override
 	public List<String> tokenize(String text) {
-		String[] sentenceArray = this.mySentenceDetector.sentDetect(text);
 		List<String> sentences = new LinkedList<String>();
-		for (String sentence: sentenceArray) {
-			sentences.add(sentence);
+		String[] segments = text.split("\n\n");
+		for (String seg : segments) {
+			String[] sentenceArray = this.mySentenceDetector.sentDetect(seg);
+
+			for (String sentence : sentenceArray) {
+				sentences.add(sentence);
+			}
 		}
-		
+
 		return sentences;
 	}
 

@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +14,10 @@ import java.util.TreeSet;
 import java.util.Map.Entry;
 import java.util.SortedSet;
 
+import org.apache.commons.lang3.StringUtils;
+
 import utility.Biostar45366;
+import utility.OpenNLPSentencesTokenizer;
 import utility.Plotter;
 
 import com.xeiam.xchart.BitmapEncoder;
@@ -24,12 +28,16 @@ import com.xeiam.xchart.StyleManager.ChartType;
 import com.xeiam.xchart.StyleManager.LegendPosition;
 import com.xeiam.xchart.SwingWrapper;
 
-import jci.Article;
+import jci.AnnotatedArticle;
 import jci.CRAFT;
 import jci.ContextVector;
+import jci.Instance;
 import jci.Term;
 import jci.TermIDName;
 import jci.TermOccurrence;
+import jci.TextProcessor;
+import jci.UnannotatedArticle;
+import jci.Utility;
 
 public class test {
 
@@ -49,6 +57,8 @@ public class test {
 		boolean task3 = false;
 		boolean task4 = false;
 		boolean task5 = true;
+		boolean task6 = false;
+		boolean task7 = true;
 		
 		String ontologyName = "CHEBI";
 		ontologyName = "CL";
@@ -64,7 +74,7 @@ public class test {
 			int windowSize = 10;
 			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
 			for (String id : ids) {
-				Article myArticle = myCRAFT.getArticle(id);
+				AnnotatedArticle myArticle = myCRAFT.getArticle(id);
 				myArticle.process(windowSize / 2);
 				termAndContextVectorAddition(termAndContextVector,
 						myArticle.getTermAndContextVector());
@@ -91,6 +101,10 @@ public class test {
 				TermIDName t = m.getKey();
 				ContextVector cv = m.getValue();
 				String ID = t.getID();
+				System.out.println(ID);
+				if (StringUtils.equals(ID, "independent_continuant")) {
+					continue;
+				}
 				Term term = myCRAFT.app.id2term.get(ID);
 				if (term.is_a.size() > 0) {
 					String name1 = null;
@@ -144,8 +158,8 @@ public class test {
 							
 							double y = cv2.getCount();
 							
-							x = Math.log(x);
-							y =  Math.log(y);
+							x = Math.log(x) / Math.log(2);
+							y =  Math.log(y) / Math.log(2);
 							
 							xData.add(x);
 							yData.add(y);
@@ -155,6 +169,7 @@ public class test {
 			}
 			
 			if (task1_scatter) {
+				System.out.println("[Plot]");
 				Plotter myPlotter = new Plotter();
 				myPlotter.makeScatter("parent_vs_child_"+ontologyName.toUpperCase()+".png", xData, yData, ontologyName.toUpperCase()+" Parent-Child Pairs", ontologyName, true);
 			}
@@ -256,22 +271,95 @@ public class test {
 			List<String> ids = myCRAFT.getArticleIDs();
 			int windowSize = 10;
 			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
-			List<TermOccurrence> occurrences = new LinkedList<TermOccurrence>(); 
+			List<TermOccurrence> allOccurrences = new LinkedList<TermOccurrence>(); 
+			List<TermOccurrence> mutationOcrs = new LinkedList<TermOccurrence>(); 
+			
 			for (String id : ids) {
-				Article myArticle = myCRAFT.getArticle(id);
+				AnnotatedArticle myArticle = myCRAFT.getArticle(id);
 				myArticle.process(windowSize / 2);
-				occurrences.addAll(myArticle.occurrences);
+				List<TermOccurrence> ocrs = new ArrayList<TermOccurrence>();
+				for (TermOccurrence ocr : myArticle.occurrences) {
+					if (StringUtils.equals(ocr.name, "mutation") || StringUtils.equals(ocr.name, "mutations")) {
+						int c = myArticle.getCount(ocr.cv);
+						ocrs.add(ocr);
+					}
+				}
+				System.out.println("ID: "+id);
+				System.out.println("Count: "+ocrs.size());
+				mutationOcrs.addAll(ocrs);
+				
+				allOccurrences.addAll(myArticle.occurrences);
 				
 			}
-			Map<String, Set<String>> dict = getDict(occurrences);
-			Map<String, List<TermOccurrence>> dict2 = getDict2(occurrences);
+			Map<String, Set<String>> dict = getDict(allOccurrences);
+			Map<String, List<TermOccurrence>> dict2 = getDict2(allOccurrences);
 			Map<String, Set<String>> dup = getDuplicates(dict);
 			Map<String, Map<String, List<TermOccurrence>>> dup2 = getDuplicates2(dict2, dup);
 			
 			printStat(dup2);
 			
+			List<Instance> mutationIns = Utility.termOccurrencesToInstances(mutationOcrs);
+			List<String> wordList = Utility.getWordList(mutationIns);
+			Utility.instancesToARFF(mutationIns, "data/mutation_train.arff");
 			System.out.println();
 			
+		}
+		
+		if (task6) {
+			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
+			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
+			List<String> ids = myCRAFT.getArticleIDs();
+			int windowSize = 10;
+			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
+			for (String id : ids) {
+				AnnotatedArticle myArticle = myCRAFT.getArticle(id);
+				String processedGeniaXMLTerm = myArticle.getProcessedGeniaXMLTerm();
+				OpenNLPSentencesTokenizer sDetector = myArticle.getSentenceDetector();
+				Set<String> idList = new HashSet<String>();
+				idList.add("so:0001059");
+				idList.add("so:0000041");
+				List<String> sentences = sDetector.tokenize(processedGeniaXMLTerm);
+				for (String sentence : sentences) {
+					String res = TextProcessor.searchUnannotatedTerm(
+							"mutation", idList, sentence);
+					if (res != null) {
+						char c3 = sentence.charAt(3);
+						int i3 = (int) c3;
+						char c4 = sentence.charAt(4);
+						int i4 = (int) c4;
+						char c5 = sentence.charAt(5);
+						int i5 = (int) c5;
+						char c6 = sentence.charAt(6);
+						int i6 = (int) c6;
+						String[] sents = res.split("\n\n");
+						System.out.println();
+
+					}
+				}
+			}
+		}
+		
+		if (task7) {
+			List<Instance> allInstances = new LinkedList<Instance>();
+			String folderDir = "C:/Users/Dongye/Dropbox/2013 fall/big data/project/articles/nxml/";
+			File folder = new File(folderDir);
+			File[] listOfFiles = folder.listFiles();
+
+			for (File file : listOfFiles) {
+			    if (file.isFile()) {
+			        System.out.println(file.getName());
+					String dir = folderDir+file.getName();
+					UnannotatedArticle art = new UnannotatedArticle(dir);
+					List<Instance> ins = art.extractInstances("mutation", 5);
+					List<Instance> ins2 = art.extractInstances("mutations", 5);
+					allInstances.addAll(ins);
+					allInstances.addAll(ins2);
+					System.out.println();
+					
+			    }
+			}
+			
+			System.out.println(allInstances.size());
 		}
 	}
 	

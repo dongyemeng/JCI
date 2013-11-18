@@ -9,13 +9,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import weka.core.Stopwords;
 
+import org.apache.commons.lang3.StringUtils;
 import org.biojava.bio.Annotation;
 import org.biojava.ontology.Ontology;
 import org.biojava.ontology.Term;
@@ -57,7 +61,7 @@ public class TextProcessor {
 		swords.remove("go");
 		swords.remove("so");
 		
-		Enumeration swEnum = swords.elements();
+		Enumeration<?> swEnum = swords.elements();
 		StringBuilder sb = new StringBuilder();
 		while (swEnum.hasMoreElements()) {
 			String word = (String)swEnum.nextElement();
@@ -81,6 +85,140 @@ public class TextProcessor {
 		s = s.replaceAll(regex, "0");
 		
 		return s;
+	}
+	
+	
+	public static String searchUnannotatedTerm(String name, Set<String> ids, String sentence) {
+		if (sentence == null || name == null) {
+			return null; 
+		}
+		
+		for (String id : ids) {
+			sentence = removeTermAnnotation(sentence, id);
+		}
+		
+		if (StringUtility.isMatchedNullSafe(sentence, "\\b"+name+"\\b")) {
+			return sentence;
+		}
+		
+		return null;
+	}
+	
+	
+	public static String removeTermAnnotation(String sentence, String targetID) {
+		List<String> res = extractAnnotation(sentence);
+		if (res == null) {
+			return sentence;
+		}
+		String head = res.get(0);
+		String id = res.get(1);
+		String name = res.get(2);
+		String tail = res.get(3);
+
+//		id = id.toLowerCase();
+//		if (StringUtils.equals(id, targetID)) {
+//			return head + tail;
+//		} else {
+//			return head + removeTermAnnotation(tail, targetID);
+//		}
+//		
+		return head + removeTermAnnotation(tail, targetID);
+	}
+	
+	
+	
+	public static List<String>  extractAnnotation(String sentence) {
+		if (sentence == null) {
+			return null;
+		}
+		
+		String regex = "^(.*?)(<term sem=\"(.*?)\">)(.*)$";
+		Pattern p = Pattern.compile(regex);
+		Matcher m = p.matcher(sentence);
+
+		if (m.find()) {
+			String head = m.group(1);
+			String mid = m.group(2);
+			String id = m.group(3);
+			String nameAndTail = m.group(4);
+			
+			List<String> nt = extractAnnotationHelper(nameAndTail);
+			if (nt == null) {
+				return null;
+			}
+			
+			String name = nt.get(0);
+			String tail = nt.get(1);
+
+			List<String> res = new ArrayList<String>();
+			res.add(head);
+			res.add(id);
+			res.add(name);
+			res.add(tail);
+
+			return res;
+		}
+		else {
+			return null;
+		}
+	}
+	
+
+
+	private static List<String> extractAnnotationHelper(String nameAndTail) {
+		if (nameAndTail == null) {
+			return null;
+		}
+		
+		int level = 1;
+		String processed = "";
+		String unprocessed = nameAndTail;
+		
+		String regex = "^(.*?)(<term sem=\"(.*?)\">|</term>)(.*)$";
+		Pattern p = Pattern.compile(regex);
+		Matcher m = p.matcher(unprocessed);
+		
+		
+
+		while (m.find()) {
+			String head = m.group(1);
+			String mid = m.group(2);
+			if (mid.matches("^<term.*$")) {
+				level++;
+				processed = processed + head + mid;
+				unprocessed = m.group(4);
+			}
+			else {
+				level--;
+				if (level == 0) {
+					String name = processed + head;				
+					String tail = m.group(4);
+					if (tail == null) {
+						tail = "";
+					}
+					List<String> nt = new ArrayList<String>();
+					
+					nt.add(name);
+					nt.add(tail);
+					
+					return nt;
+				}
+				else {
+				processed = processed + head + mid;
+				unprocessed = m.group(4);
+//				String g0 = m.group(0);
+//				String g1 = m.group(1);
+//				String g2 = m.group(2);
+//				String g3 = m.group(3);
+//				String g4 = m.group(4);
+//				System.out.println();
+				}
+			}
+			
+			m = p.matcher(unprocessed);
+		}
+		
+		return null;
 	}
 
 	/**

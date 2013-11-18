@@ -62,7 +62,7 @@ public class CRAFT {
 		return ids;
 	}
 	
-	public Article getArticle(String id) {
+	public AnnotatedArticle getArticle(String id) {
 		String path = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0/README.txt";
 		
 		path = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0/genia-xml/term/go_cc/11532192.txt";
@@ -74,12 +74,13 @@ public class CRAFT {
 		path = this.dir+"/genia-xml/term/"+this.ontologyName.toLowerCase()+"/"+id+".txt.xml";
 		//File geniaXMLTermFile = new File(this.dir+"/genia-xml/term/go_cc/"+id+".txt.xml");
 		File geniaXMLTermFile = new File(path);
-		String geniaXMLTerm = "";
+		StringBuilder geniaXMLTermBuilder = new StringBuilder();
 		try {
 			List<String> lines = Files.readAllLines(geniaXMLTermFile.toPath(), Charset.forName("UTF-8"));
 //			for (String line : lines) {
 			for (int i = 1; i < lines.size(); i++) {
-				geniaXMLTerm = geniaXMLTerm + "\n" + lines.get(i);
+				geniaXMLTermBuilder.append("\n");
+				geniaXMLTermBuilder.append(lines.get(i));
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -87,7 +88,7 @@ public class CRAFT {
 		}
 		
 //		System.out.println(geniaXMLTerm);
-		Article myArticle = new Article(geniaXMLTerm);
+		AnnotatedArticle myArticle = new AnnotatedArticle(geniaXMLTermBuilder.toString());
 		return myArticle;
 	}
 

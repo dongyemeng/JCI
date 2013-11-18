@@ -2,6 +2,7 @@ package jci;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,46 +14,56 @@ import org.apache.commons.lang3.StringUtils;
 import utility.OpenNLPSentencesTokenizer;
 import utility.OpenNLPTokenizer;
 
-public class Article {
+public class AnnotatedArticle {
 
 	private String text;
-	private String geniaXMLTerm;
+	private String rawGeniaXMLTerm;
+	private String processedGeniaXMLTerm;
 	private List<TermIDName> terms;
 	public List<TermOccurrence> occurrences;
 	
-	private Map<TermIDName, ContextVector> termAndContextVector;
+	public Map<TermIDName, ContextVector> termAndContextVector;
 	private OpenNLPTokenizer myTokenizer;
 	private OpenNLPSentencesTokenizer mySentenceDetector;
 	
+	public String getProcessedGeniaXMLTerm(){
+		return this.processedGeniaXMLTerm;
+	}
 	
-	public Article(String gTerm) {
+	public OpenNLPSentencesTokenizer getSentenceDetector() {
+		return this.mySentenceDetector;
+	}
+	
+	
+	public AnnotatedArticle(String gTerm) {
 		String openNLPSentenceDetectorDir = "res//en-sent.bin";
 		String openNLPTokenizerDir = "res//en-token.bin";
 		this.mySentenceDetector = new OpenNLPSentencesTokenizer(openNLPSentenceDetectorDir);
 		this.myTokenizer = new OpenNLPTokenizer(openNLPTokenizerDir);
-		this.geniaXMLTerm = gTerm;
+		this.rawGeniaXMLTerm = gTerm;
+		
+		this.processedGeniaXMLTerm = this.preprocess(this.rawGeniaXMLTerm);
+//		String[] sentences = geniaXMLTerm.split("(\\. |, |\n)");
+		
+		this.processedGeniaXMLTerm = TextProcessor.removeStopWords(this.processedGeniaXMLTerm);
+//		geniaXMLTerm = TextProcessor.handleDigits(geniaXMLTerm);
+		this.processedGeniaXMLTerm = TextProcessor.mergeSpace(this.processedGeniaXMLTerm);
+		this.processedGeniaXMLTerm = TextProcessor.trim(this.processedGeniaXMLTerm);
 		
 		termAndContextVector = new HashMap<TermIDName, ContextVector>();
 		occurrences = new LinkedList<TermOccurrence>();
 	}
+
 	
 	public void process(int windowRadius) {
-		
-		this.geniaXMLTerm = this.preprocess(this.geniaXMLTerm);
-//		String[] sentences = geniaXMLTerm.split("(\\. |, |\n)");
-		
-		geniaXMLTerm = TextProcessor.removeStopWords(geniaXMLTerm);
-//		geniaXMLTerm = TextProcessor.handleDigits(geniaXMLTerm);
-		geniaXMLTerm = TextProcessor.mergeSpace(geniaXMLTerm);
-		geniaXMLTerm = TextProcessor.trim(geniaXMLTerm);
-		
-		List<String> sentences = this.mySentenceDetector.tokenize(geniaXMLTerm);
+	
+		List<String> sentences = this.mySentenceDetector.tokenize(this.processedGeniaXMLTerm);
 		for (String sentence : sentences) {
 			if (!StringUtils.equals(sentence, "")) {
 				if (StringUtils.equals(sentence, "protein belongs family <term sem=\"so:0000857\">evolutionarily conserved</term> proteins bipartite structure variable -terminal <term sem=\"so:0000856\">conserved</term> <term sem=\"so:0100015\">-terminal <term sem=\"so:0000417\">domain</term></term>.")) {
 					System.out.println();
 				}
-				List<String> res = this.test(sentence);
+				List<String> res = TextProcessor.extractAnnotation(sentence);
 				while (res != null) {
 					String head = res.get(0);
 					String id = res.get(1);
@@ -62,6 +73,10 @@ public class Article {
 					String rawHead = this.removeAnnotation(head);
 					String rawName = this.removeAnnotation(name);
 					String rawTail = this.removeAnnotation(tail);
+					
+					if (StringUtils.equals(rawName, "Mutation")) {
+						System.out.println();
+					}
 
 					rawHead = TextProcessor.trim(rawHead);
 					rawName = TextProcessor.trim(rawName);
@@ -91,14 +106,33 @@ public class Article {
 						}
 					}
 
+					id = id.toLowerCase();
 					TermIDName term = new TermIDName(id, rawName);
 
 					ContextVector contextVector = new ContextVector(
 							contextWords);
+					
+					List<String> contextWordsCopy = new ArrayList<String>();
+					contextWordsCopy.addAll(contextWords);
 					TermOccurrence ocr = new TermOccurrence(id, rawName,
-							contextVector);
+							new ContextVector(contextWordsCopy));
 					if (StringUtils.equals(name,
 							"-terminal <term sem=\"so:0000417\">domain")) {
+						System.out.println();
+					}
+					if (StringUtils.equals(name,
+							"mutation")) {
+						if (this.getCount(contextVector) >10){
+						System.out.println();
+						}
+					}
+					if (StringUtils.equals(name,
+							"mutations")) {
+						if (this.getCount(contextVector) >10){
+							System.out.println();
+						}
+					}
+					if (this.getCount(contextVector) >10){
 						System.out.println();
 					}
 					this.occurrences.add(ocr);
@@ -118,10 +152,21 @@ public class Article {
 					sentence = TextProcessor.mergeSpace(sentence);
 					sentence = TextProcessor.trim(sentence);
 
-					res = this.test(sentence);
+					res = TextProcessor.extractAnnotation(sentence);
 				}
 			}
 		}
+	}
+	
+	public int getCount(ContextVector cv) {
+		int c = 0;
+		Iterator<String> iter = cv.vector.keySet().iterator();
+		while (iter.hasNext()) {
+			String key = iter.next();
+			c += cv.vector.get(key);
+		}
+		
+		return c;
 	}
 	
 	public List<String> processSentence(String sentence) {
@@ -205,120 +250,18 @@ public class Article {
 		
 		return s;
 	}
-	
-	public String trimString(String s) {
-		s = s.replaceAll("^\\s+", "");
-		s = s.replaceAll("\\s+$", "");
-		
-		return s;
-	}
-	
-	
-	
-	public List<String>  test(String sentence) {
-		if (sentence == null) {
-			return null;
-		}
-		
-		String regex = "^(.*?)(<term sem=\"(.*?)\">)(.*)$";
-		Pattern p = Pattern.compile(regex);
-		Matcher m = p.matcher(sentence);
 
-		if (m.find()) {
-			String head = m.group(1);
-			String mid = m.group(2);
-			String id = m.group(3);
-			String nameAndTail = m.group(4);
-			
-			List<String> nt = test2(nameAndTail);
-			if (nt == null) {
-				return null;
-			}
-			
-			String name = nt.get(0);
-			String tail = nt.get(1);
-
-			List<String> res = new ArrayList<String>();
-			res.add(head);
-			res.add(id);
-			res.add(name);
-			res.add(tail);
-
-			return res;
-		}
-		else {
-			return null;
-		}
-	}
-	
-
-
-	private List<String> test2(String nameAndTail) {
-		if (nameAndTail == null) {
-			return null;
-		}
-		
-		int level = 1;
-		String processed = "";
-		String unprocessed = nameAndTail;
-		
-		String regex = "^(.*?)(<term sem=\"(.*?)\">|</term>)(.*)$";
-		Pattern p = Pattern.compile(regex);
-		Matcher m = p.matcher(unprocessed);
-		
-		
-
-		while (m.find()) {
-			String head = m.group(1);
-			String mid = m.group(2);
-			if (mid.matches("^<term.*$")) {
-				level++;
-				processed = processed + head + mid;
-				unprocessed = m.group(4);
-			}
-			else {
-				level--;
-				if (level == 0) {
-					String name = processed + head;				
-					String tail = m.group(4);
-					if (tail == null) {
-						tail = "";
-					}
-					List<String> nt = new ArrayList<String>();
-					
-					nt.add(name);
-					nt.add(tail);
-					
-					return nt;
-				}
-				else {
-				processed = processed + head + mid;
-				unprocessed = m.group(4);
-//				String g0 = m.group(0);
-//				String g1 = m.group(1);
-//				String g2 = m.group(2);
-//				String g3 = m.group(3);
-//				String g4 = m.group(4);
-//				System.out.println();
-				}
-			}
-			
-			m = p.matcher(unprocessed);
-		}
-		
-		return null;
-	}
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		Article myA = new Article("");
+		AnnotatedArticle myA = new AnnotatedArticle("");
 		String sent = "protein belongs family <term sem=\"so:0000857\">evolutionarily conserved</term> proteins bipartite structure variable -terminal <term sem=\"so:0000856\">conserved</term> <term sem=\"so:0100015\">-terminal <term sem=\"so:0000417\">domain</term></term>.";
 		sent = "protein belongs family <term sem=\"so:0000857\">evolutionarily conserved</term> proteins bipartite structure variable -terminal <term sem=\"so:0000856\">conserved</term> <term sem=\"so:0100015\">-terminal <term sem=\"so:0000417\">domain</term></term>.";
 		sent = " <term sem=\"so:0100015\">-terminal <term sem=\"so:0000417\">domain</term></term>.";
 
-		List<String> res = myA.test(sent);
+		List<String> res = TextProcessor.extractAnnotation(sent);
 		while (res != null) {
 			String head = res.get(0);
 			String id = res.get(1);
@@ -360,7 +303,7 @@ public class Article {
 			ContextVector contextVector = new ContextVector(contextWords);
 			TermOccurrence ocr = new TermOccurrence(id, rawName, contextVector);
 			
-			res = myA.test(head + name + tail);
+			res = TextProcessor.extractAnnotation(head + name + tail);
 		}
 
 //		       "^(.*?)<term sem=\"(.*?)\">(.*?)</term>(.*)$";
