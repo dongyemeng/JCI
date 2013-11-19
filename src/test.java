@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import utility.Biostar45366;
 import utility.OpenNLPSentencesTokenizer;
 import utility.Plotter;
+import utility.Utility;
 
 import com.xeiam.xchart.BitmapEncoder;
 import com.xeiam.xchart.Chart;
@@ -37,7 +38,6 @@ import jci.TermIDName;
 import jci.TermOccurrence;
 import jci.TextProcessor;
 import jci.UnannotatedArticle;
-import jci.Utility;
 
 public class test {
 
@@ -56,8 +56,14 @@ public class test {
 		boolean task2 = false;
 		boolean task3 = false;
 		boolean task4 = false;
+		
+		// make the mutation train arff file
 		boolean task5 = true;
+		List<Instance> mutationIns = new LinkedList<Instance>();
+		
 		boolean task6 = false;
+		
+		// make the mutation unknown arff file
 		boolean task7 = true;
 		
 		String ontologyName = "CHEBI";
@@ -298,9 +304,9 @@ public class test {
 			
 			printStat(dup2);
 			
-			List<Instance> mutationIns = Utility.termOccurrencesToInstances(mutationOcrs);
+			mutationIns = Utility.termOccurrencesToInstances(mutationOcrs);
 			List<String> wordList = Utility.getWordList(mutationIns);
-			Utility.instancesToARFF(mutationIns, "data/mutation_train.arff");
+//			Utility.instancesToARFF(mutationIns, "data/mutation_train.arff");
 			System.out.println();
 			
 		}
@@ -360,6 +366,13 @@ public class test {
 			}
 			
 			System.out.println(allInstances.size());
+			
+			LinkedList<Instance> combinedIns = new LinkedList<Instance>();
+			combinedIns.addAll(mutationIns);
+			combinedIns.addAll(allInstances);
+			List<String> featureList = Utility.getWordList(combinedIns);
+			Utility.instancesToARFF(mutationIns, featureList, "data/mutation_train.arff");
+			Utility.instancesToARFF(allInstances, featureList, "data/mutation_unknown.arff");
 		}
 	}
 	

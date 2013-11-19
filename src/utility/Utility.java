@@ -1,4 +1,4 @@
-package jci;
+package utility;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import jci.ContextVector;
+import jci.Instance;
+import jci.TermOccurrence;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -59,8 +63,11 @@ public class Utility {
 		if (StringUtils.equals(in.cls, "so:0001059")) {
 			cls = "c1";
 		}
-		else {
+		else if (StringUtils.equals(in.cls, "so:0000041")){
 			cls = "c2";
+		}
+		else {
+			cls = "unknown";
 		}
 		
 		StringBuilder lineBuilder = new StringBuilder();
@@ -83,9 +90,9 @@ public class Utility {
 		return lineBuilder.toString();
 	}
 	
-	public static void instancesToARFF(List<Instance> ins, String fileName) {
+	public static void instancesToARFF(List<Instance> ins, List<String> featureList, String fileName) {
 		
-		List<String> featureList = getWordList(ins);
+		
 		
 		PrintWriter writer = null;
 		try {
@@ -96,7 +103,7 @@ public class Utility {
 				for (int i = 0; i < featureList.size(); i++) {
 					writer.println(String.format("@attribute f%d numeric", i));
 				}
-				writer.println("@attribute class {c1, c2}");
+				writer.println("@attribute class {c1, c2, unknown}");
 				writer.println("\n");
 				writer.println("@data");
 				for (Instance in : ins) {
