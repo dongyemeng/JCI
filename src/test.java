@@ -50,11 +50,17 @@ public class test {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-
+		// print parent-child pairs for each ontology
 		boolean task1 = false;
 		boolean task1_scatter = false;
+		
+		// compute the # of terms for each ontoloty
 		boolean task2 = false;
+		
+		// test xChart
 		boolean task3 = false;
+		
+		// INLS 509
 		boolean task4 = false;
 		
 		// make the mutation train arff file
