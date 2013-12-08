@@ -72,9 +72,14 @@ public class test {
 		// make the mutation unknown arff file
 		boolean task7 = true;
 		
+		// make the count vs depth plot
+		boolean task8 = false;
+		
 		String ontologyName = "CHEBI";
 		ontologyName = "CL";
 		ontologyName = "GO_BPMF";
+		ontologyName = "GO_CC";
+		
 //		ontologyName = "NCBITaxon";
 //		ontologyName = "PR";
 		ontologyName = "SO";
@@ -84,14 +89,22 @@ public class test {
 			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
 			List<String> ids = myCRAFT.getArticleIDs();
 			int windowSize = 10;
-			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
+			
+			// map maps a term to its sum context vector (adding all context vector together)
+			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();			
 			for (String id : ids) {
 				AnnotatedArticle myArticle = myCRAFT.getArticle(id);
 				myArticle.process(windowSize / 2);
 				termAndContextVectorAddition(termAndContextVector,
 						myArticle.getTermAndContextVector());
 			}
+			
 
+			
+//			termAndContextVector.keySet().i
+			
+
+			// print out all terms appear in the corpus
 			SortedSet<TermIDName> terms = new TreeSet<TermIDName>(
 					termAndContextVector.keySet());
 			for (TermIDName term : terms) {
@@ -183,7 +196,16 @@ public class test {
 			if (task1_scatter) {
 				System.out.println("[Plot]");
 				Plotter myPlotter = new Plotter();
-				myPlotter.makeScatter("parent_vs_child_"+ontologyName.toUpperCase()+".png", xData, yData, ontologyName.toUpperCase()+" Parent-Child Pairs", ontologyName, true);
+				myPlotter.makeScatter(
+						"parent_vs_child_" + ontologyName.toUpperCase() + ".png", 
+						xData, 
+						yData,
+						ontologyName.toUpperCase() + " Parent-Child Pairs",
+						"log of # of parent term context words (base 2)",
+						"log of # of child term context words (base 2)",
+						ontologyName, 
+						true,
+						true);
 			}
 		}
 
@@ -380,6 +402,122 @@ public class test {
 			Utility.instancesToARFF(mutationIns, featureList, "data/mutation_train.arff");
 			Utility.instancesToARFF(allInstances, featureList, "data/mutation_unknown.arff");
 		}
+		
+		if (task8) {
+			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
+			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
+			List<String> ids = myCRAFT.getArticleIDs();
+			int windowSize = 10;
+			
+			// compute term counts
+			Map<Term, Integer> termCounts = new HashMap<Term, Integer>();
+			
+
+			
+			for (String id : ids) {
+				AnnotatedArticle myArticle = myCRAFT.getArticle(id);
+				myArticle.process(windowSize / 2);
+
+				for (TermOccurrence ocr : myArticle.occurrences) {
+					if (ocr.id.equals("independent_continuant")) {
+						continue;
+					}
+					Term t = myCRAFT.app.id2term.get(ocr.id);
+					if (t==null) {
+						System.out.println();
+					}
+					if (termCounts.containsKey(t)) {
+						int c = termCounts.get(t);
+						c++;
+						termCounts.put(t, c);
+					}
+					else {
+						termCounts.put(t, 1);
+					}
+					
+					
+				}
+
+				
+			}
+			
+			Iterator<Term> iter = termCounts.keySet().iterator();
+			List<Number> xData = new ArrayList<Number>();
+			List<Number> yData = new ArrayList<Number>();
+			
+			// 
+			Map<Integer, List<Integer>> depthToCount = new HashMap<Integer, List<Integer>>();
+			Map<Integer, Double> depthToAverageCount = new HashMap<Integer, Double>();
+			
+			while (iter.hasNext()) {
+				Term key = iter.next();
+				int count = termCounts.get(key);
+				int depth = key.depth(myCRAFT.app.id2term);
+				System.out.println("Term: "+key.id);
+				System.out.println("\tDepth: "+depth);
+				System.out.println("\tCount: "+count);
+				System.out.println();
+				xData.add(depth);
+				yData.add(count);
+				
+				if (depthToCount.containsKey(depth)) {
+					depthToCount.get(depth).add(count);
+				}
+				else {
+					List<Integer> counts = new ArrayList<Integer>();
+					counts.add(count);
+					depthToCount.put(depth, counts);
+				}
+			}
+			
+			Plotter myPlotter = new Plotter();
+			myPlotter.makeScatter(
+					"depth vs occurrence_" + ontologyName.toUpperCase() + ".png", 
+					xData, 
+					yData,
+					ontologyName.toUpperCase() + " depth vs. # of term occurrence",
+					"depth",
+					"# of occurrence",
+					ontologyName, 
+					false,
+					true);	
+			
+			Iterator<Integer> iter2 = depthToCount.keySet().iterator();					
+			while (iter2.hasNext()) {
+				int key = iter2.next();
+				List<Integer> counts = depthToCount.get(key);
+				int sum = 0;
+				for (int i = 0; i < counts.size();i++) {
+					sum+=counts.get(i);
+				}
+				
+				double averageCount = ((double) sum) / ((double)counts.size());
+				depthToAverageCount.put(key, averageCount);
+			}
+			
+			List<Number> xData2 = new ArrayList<Number>();
+			List<Number> yData2 = new ArrayList<Number>();
+			SortedSet<Integer> depthes = new TreeSet();
+			depthes.addAll(depthToAverageCount.keySet());
+			for (Integer d: depthes){
+				xData2.add(d);
+				yData2.add(depthToAverageCount.get(d));
+			}
+			
+			myPlotter.makePlot(
+					"depth vs average occurrence_" + ontologyName.toUpperCase() + ".png", 
+					xData2, 
+					yData2,
+					ontologyName.toUpperCase() + " depth vs. average # of term occurrence",
+					"depth",
+					"average # of occurrence",
+					ontologyName, 
+					false,
+					true);	
+			
+			
+					
+		}
 	}
 	
 
@@ -400,7 +538,6 @@ public class test {
 				System.out.println();
 			}
 		}
-		
 	}
 
 	public static Map<String, Set<String>> getDuplicates(Map<String, Set<String>> dict) {

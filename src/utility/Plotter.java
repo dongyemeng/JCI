@@ -1,5 +1,6 @@
 package utility;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +14,8 @@ import jci.ContextVector;
 import com.xeiam.xchart.BitmapEncoder;
 import com.xeiam.xchart.Chart;
 import com.xeiam.xchart.ChartBuilder;
+import com.xeiam.xchart.Series;
+import com.xeiam.xchart.SeriesMarker;
 import com.xeiam.xchart.SwingWrapper;
 import com.xeiam.xchart.StyleManager.ChartType;
 import com.xeiam.xchart.StyleManager.LegendPosition;
@@ -23,12 +26,39 @@ public class Plotter {
 		// TODO Auto-generated constructor stub
 	}
 
+	public void makePlot(String name, List<Number> xData1,
+			List<Number> yData1, String title, String xTitle, String yTitle,
+			String seriesName, boolean isFixedRadio, boolean isSave) {	
+		// Create Chart
+		Chart chart = new ChartBuilder().width(800).height(600).title(title).xAxisTitle(xTitle).yAxisTitle(yTitle).build();
+		 
+		// Customize Chart
+		chart.getStyleManager().setChartTitleVisible(true);
+		
+		// Series
+		chart.addSeries(seriesName, xData1, yData1);
+		chart.getStyleManager().setLegendPosition(LegendPosition.InsideNE);
+
+		
+		new SwingWrapper(chart).displayChart();
+		
+		if (isSave) {
+			try {
+				BitmapEncoder.savePNG(chart, name);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public void makeScatter(String name, List<Number> xData,
-			List<Number> yData, String title, String seriesName, boolean isSave) {
+			List<Number> yData, String title, String xTitle, String yTitle,
+			String seriesName, boolean isFixedRadio, boolean isSave) {
 		// Chart chart = new Chart(800, 600);
 		Chart chart = new ChartBuilder().chartType(ChartType.Scatter)
 				.width(900).height(900).title(title)
-				.xAxisTitle("# of parent term context words").yAxisTitle("# of child term context words").build();
+				.xAxisTitle(xTitle).yAxisTitle(yTitle).build();
 		chart.getStyleManager().setChartType(ChartType.Scatter);
 
 		// Customize Chart
@@ -39,22 +69,21 @@ public class Plotter {
 		
 		chart.getStyleManager().setLegendPosition(LegendPosition.InsideNE);
 		
-		
-		int xMax = 0;
-		for (Number n : xData) {
-			xMax = Math.max(xMax, n.intValue());
-		}
+		if (isFixedRadio) {
+			int xMax = 0;
+			for (Number n : xData) {
+				xMax = Math.max(xMax, n.intValue());
+			}
 
-
-		int yMax = 0;
-		for (Number n : yData) {
-			yMax = Math.max(yMax, n.intValue());
+			int yMax = 0;
+			for (Number n : yData) {
+				yMax = Math.max(yMax, n.intValue());
+			}
+			chart.getStyleManager().setXAxisMin(0);
+			chart.getStyleManager().setXAxisMax(Math.max(xMax, yMax) * 1.1);
+			chart.getStyleManager().setYAxisMin(0);
+			chart.getStyleManager().setYAxisMax(Math.max(xMax, yMax) * 1.1);
 		}
-		chart.getStyleManager().setXAxisMin(0);
-		chart.getStyleManager().setXAxisMax(Math.max(xMax, yMax));
-		chart.getStyleManager().setYAxisMin(0);
-		chart.getStyleManager().setYAxisMax(Math.max(xMax, yMax));
-		 
 		
 		
 		new SwingWrapper(chart).displayChart();
@@ -137,7 +166,8 @@ public class Plotter {
 			xData.add(i);
 			yData.add(i);
 		}
-		myPlotter.makeScatter("test", xData, yData, "test title", "test series", false);
+		myPlotter.makeScatter("test", xData, yData, "test title", "xTitle",
+				"yTitle", "test series", true, false);
 	}
 
 }
