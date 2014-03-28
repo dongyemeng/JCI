@@ -33,9 +33,13 @@ public class TermIDName implements Comparable<TermIDName>{
 	
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(13, 37)
-		.append(this.ID)
-		.toHashCode();
+//		int hashCode = new HashCodeBuilder(13, 37)
+//		.append(this.ID)
+//		.toHashCode(); 
+//		
+//		return hashCode;
+		int hashCode = this.ID.hashCode();
+		return hashCode;
 	}
 	
 	@Override

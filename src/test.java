@@ -51,8 +51,8 @@ public class test {
 	 */
 	public static void main(String[] args) throws IOException {
 		// print parent-child pairs for each ontology
-		boolean task1 = false;
-		boolean task1_scatter = false;
+		boolean task1 = true;
+		boolean task1_scatter = true;
 		
 		// compute the # of terms for each ontoloty
 		boolean task2 = false;
@@ -64,13 +64,13 @@ public class test {
 		boolean task4 = false;
 		
 		// make the mutation train arff file
-		boolean task5 = true;
+		boolean task5 = false;
 		List<Instance> mutationIns = new LinkedList<Instance>();
 		
 		boolean task6 = false;
 		
 		// make the mutation unknown arff file
-		boolean task7 = true;
+		boolean task7 = false;
 		
 		// make the count vs depth plot
 		boolean task8 = false;
@@ -83,6 +83,8 @@ public class test {
 //		ontologyName = "NCBITaxon";
 //		ontologyName = "PR";
 		ontologyName = "SO";
+		
+		boolean task10 = true;
 
 		if (task1) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
@@ -95,7 +97,7 @@ public class test {
 			for (String id : ids) {
 				AnnotatedArticle myArticle = myCRAFT.getArticle(id);
 				myArticle.process(windowSize / 2);
-				termAndContextVectorAddition(termAndContextVector,
+				ContextVector.termAndContextVectorAddition(termAndContextVector,
 						myArticle.getTermAndContextVector());
 			}
 			
@@ -616,23 +618,6 @@ public class test {
 		return dict;		
 	}
 
-	public static void termAndContextVectorAddition(
-			Map<TermIDName, ContextVector> t, Map<TermIDName, ContextVector> s) {
-		Iterator<Entry<TermIDName, ContextVector>> iter = s.entrySet()
-				.iterator();
-		while (iter.hasNext()) {
-			Entry<TermIDName, ContextVector> e = iter.next();
-			TermIDName key = e.getKey();
-			ContextVector value = e.getValue();
 
-			if (t.containsKey(key)) {
-				ContextVector oldValue = t.get(key);
-				oldValue.add(value);
-				t.put(key, oldValue);
-			} else {
-				t.put(key, value);
-			}
-		}
-	}
 
 }

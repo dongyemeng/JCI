@@ -74,7 +74,7 @@ public class Utility {
 		for (String feature : featureList) {
 			
 			if (in.cVector.vector.containsKey(feature)) {
-				int count = in.cVector.vector.get(feature);
+				double count = in.cVector.vector.get(feature);
 				if (count > 10) {
 					System.out.println();
 				}

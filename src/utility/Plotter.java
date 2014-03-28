@@ -123,14 +123,14 @@ public class Plotter {
 			}
 			x.add(key);
 			if (cv1.vector.containsKey(key)) {
-				int c = cv1.vector.get(key);
+				double c = cv1.vector.get(key);
 				y1.add(c);
 			} else {
 				y1.add(0);
 			}
 
 			if (cv2.vector.containsKey(key)) {
-				int c = cv2.vector.get(key);
+				double c = cv2.vector.get(key);
 				y2.add(c);
 			} else {
 				y2.add(0);

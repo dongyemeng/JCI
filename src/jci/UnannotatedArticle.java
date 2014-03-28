@@ -65,12 +65,12 @@ public class UnannotatedArticle {
 					for (int j = 1; j <= windowRadius; j++) {
 						if (i - j >= 0) {
 							String w = words.get(i-j);
-							cv.addWord(w, 1);
+							cv.addWord(w, (double) 1);
 						}
 						
 						if (i + j < words.size()) {
 							String w = words.get(i+j);
-							cv.addWord(w, 1);
+							cv.addWord(w, (double) 1);
 						}
 					}
 
