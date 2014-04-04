@@ -26,8 +26,8 @@ public class Plotter {
 		// TODO Auto-generated constructor stub
 	}
 
-	public void makePlot(String name, List<Number> xData1,
-			List<Number> yData1, String title, String xTitle, String yTitle,
+	public void makePlot(String name, List<Number> xData,
+			List<Number> yData, String title, String xTitle, String yTitle,
 			String seriesName, boolean isFixedRadio, boolean isSave) {	
 		// Create Chart
 		Chart chart = new ChartBuilder().width(800).height(600).title(title).xAxisTitle(xTitle).yAxisTitle(yTitle).build();
@@ -36,7 +36,7 @@ public class Plotter {
 		chart.getStyleManager().setChartTitleVisible(true);
 		
 		// Series
-		chart.addSeries(seriesName, xData1, yData1);
+		chart.addSeries(seriesName, xData, yData);
 		chart.getStyleManager().setLegendPosition(LegendPosition.InsideNE);
 
 		
@@ -51,6 +51,48 @@ public class Plotter {
 			}
 		}
 	}
+//	
+//	public void makeHistgram(String name, List<Double> data, String title, String xTitle, String yTitle,
+//			String seriesName, boolean isFixedRadio, boolean isSave) {
+//		
+//	}
+	
+	public void makeQQPlot(String name, List<Double> data, String title, String xTitle, String yTitle,
+			String seriesName, boolean isFixedRadio, boolean isSave) {
+		List<Number> xData = new ArrayList<Number>();
+		List<Number> yData = new ArrayList<Number>();
+
+		double sum = 0.0; 
+		for (int i = 0; i < data.size(); i++) {
+			sum += data.get(i);
+			xData.add(i+1);
+			yData.add(sum);
+		}
+		
+		// Create Chart
+		Chart chart = new ChartBuilder().width(800).height(600).title(title)
+				.xAxisTitle(xTitle).yAxisTitle(yTitle).build();
+		 
+		// Customize Chart
+		chart.getStyleManager().setChartTitleVisible(true);
+		
+		// Series
+		chart.addSeries(seriesName, xData, yData);
+		chart.getStyleManager().setLegendPosition(LegendPosition.InsideNE);
+		
+		new SwingWrapper(chart).displayChart();
+		
+		if (isSave) {
+			try {
+				BitmapEncoder.savePNG(chart, name);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+
 	
 	public void makeScatter(String name, List<Number> xData,
 			List<Number> yData, String title, String xTitle, String yTitle,
@@ -157,6 +199,8 @@ public class Plotter {
 		}
 
 	}
+	
+	
 
 	public static void main(String[] args) {
 		Plotter myPlotter = new Plotter();

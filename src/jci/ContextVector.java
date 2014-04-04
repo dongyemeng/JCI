@@ -161,5 +161,4 @@ public class ContextVector {
 		
 		return mag;
 	}
-
 }

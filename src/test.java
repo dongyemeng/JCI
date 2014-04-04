@@ -51,8 +51,8 @@ public class test {
 	 */
 	public static void main(String[] args) throws IOException {
 		// print parent-child pairs for each ontology
-		boolean task1 = true;
-		boolean task1_scatter = true;
+		boolean task1 = false;
+		boolean task1_scatter = false;
 		
 		// compute the # of terms for each ontoloty
 		boolean task2 = false;
@@ -73,7 +73,7 @@ public class test {
 		boolean task7 = false;
 		
 		// make the count vs depth plot
-		boolean task8 = false;
+		boolean task8 = true;
 		
 		String ontologyName = "CHEBI";
 		ontologyName = "CL";
@@ -498,6 +498,7 @@ public class test {
 			}
 			
 			List<Number> xData2 = new ArrayList<Number>();
+
 			List<Number> yData2 = new ArrayList<Number>();
 			SortedSet<Integer> depthes = new TreeSet();
 			depthes.addAll(depthToAverageCount.keySet());

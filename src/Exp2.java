@@ -1,4 +1,6 @@
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -6,6 +8,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
+
+import utility.ListUtility;
+import utility.Plotter;
 
 import jci.AnnotatedArticle;
 import jci.CRAFT;
@@ -20,19 +25,25 @@ public class Exp2 {
 	 */
 	public static void main(String[] args) {
 		String ontologyName = "SO";
-		ontologyName = "PR";
-		ontologyName = "NCBITaxon";
-		ontologyName = "GO_CC";
-		ontologyName = "GO_BPMF";
-		ontologyName = "CL";
-		ontologyName = "CHEBI";
-		System.out.println("Ontology: "+ ontologyName);
+//		ontologyName = "PR";
+//		ontologyName = "NCBITaxon"; NOT work
+//		ontologyName = "GO_CC";
+//		ontologyName = "GO_BPMF";
+//		ontologyName = "CL";
+//		ontologyName = "CHEBI";
+		
 
 		String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 		CRAFT myCRAFT = new CRAFT(dir, ontologyName);
 		List<String> ids = myCRAFT.getArticleIDs();
 		int windowSize = 10;
-
+		int threshold = 50;
+		int maxDepth = 10;
+		Plotter myPlot = new Plotter();
+		
+		System.out.println("Ontology: " + ontologyName);
+		System.out.println("Threshold: " + threshold);
+		
 		// Part I:
 		boolean part1 = true;
 
@@ -61,122 +72,148 @@ public class Exp2 {
 			}
 
 			System.out.println("Computing averagedCosineSimilarity...");
-			double averagedCosineSimilarity = computeAveragedCosineSimilarity(contextVectors);
+
+			List<ContextVector> largeContextVectors = new ArrayList<ContextVector>();
+			for (ContextVector cv : contextVectors) {
+				if (isLargeContextVector(cv, threshold)) {
+					largeContextVectors.add(cv);
+				}
+			}
+			List<Double> cosineSimilarityScores = computeCosineSimilarityScoresForAllvsAll(largeContextVectors);
+
+			Collections.sort(cosineSimilarityScores);
+
+//			System.out.println(cosineSimilarityScores.size());
+			
+			myPlot.makeQQPlot(
+					"QQplot of cosine similarity scores between all pairs of terms.png",
+					cosineSimilarityScores,
+					"QQplot of cosine similarity scores between all pairs of terms",
+					"Count", "cumulative scores",
+					"cosine similarity scores between all pairs of terms",
+					false, true);
+
+			double averagedCosineSimilarity = ListUtility
+					.computeAverage(cosineSimilarityScores);
 			System.out.println("averagedCosineSimilarity");
 			System.out.println(averagedCosineSimilarity);
 		}
 
 		// Part II: cosine similarity between parent and child
 		System.out.println("Computing parent-child cosine similarity...");
+		
 
-		int maxDepth = 15;
-//		int d = 10;
-		for (int d = maxDepth; d > 0; d--) {
-			double parentChildCosineSimilarity = 0.0;
-			int count = 0;
+		List<List<Double>> cosineSimilarityScoresList = new ArrayList<List<Double>>();
+		for (int d = 1; d <= maxDepth; d++) {
+			List<Double> cosineSimilarityScores = computeCosineSimilarityScoresWithDepthFixed(termAndContextVector, myCRAFT.app.id2term, d, threshold);
+			cosineSimilarityScoresList.add(cosineSimilarityScores);
+		}
+		
+		// Print out averaged scores
+		for (int i = 0; i < cosineSimilarityScoresList.size(); i++) {
+			List<Double> cosineSimilarityScores = cosineSimilarityScoresList.get(i);
+			Collections.sort(cosineSimilarityScores);
+			if (i==12)
+			System.out.println(i);
+			if (cosineSimilarityScores.size() > 0) {
+				myPlot.makeQQPlot(
+						String.format("QQplot_depth_%d_threshold_%d.png",
+								i + 1, threshold),
+						cosineSimilarityScores,
+						String.format(
+								"QQplot of cosine similarity scores between terms and their ancestors of distance %d (Both the term and its ancestors have at least %d context words)",
+								i + 1, threshold), "Count",
+						"cumulative scores", "cosine similarity scores", false,
+						true);
+				double averagedScore = ListUtility
+						.computeAverage(cosineSimilarityScores);
+				System.out.println(String.format(
+						"Depth: %d, averaged score: %f", i + 1, averagedScore));
+			}
+		}
+		
+	}
+	
+	private static List<Double> computeCosineSimilarityScoresWithDepthFixed(
+			Map<TermIDName, ContextVector> termAndContextVector,
+			Map<String, Term> id2term, int d, int threshold) {
+		List<Double> cosineSimilarityScores = new ArrayList<Double>();
+
+		Iterator<Entry<TermIDName, ContextVector>> iter2 = termAndContextVector
+				.entrySet().iterator();
+		while (iter2.hasNext()) {
+			Entry<TermIDName, ContextVector> m = iter2.next();
+			TermIDName t = m.getKey();
+			ContextVector cv = m.getValue();
 			
-			Iterator<Entry<TermIDName, ContextVector>> iter2 = termAndContextVector
-					.entrySet().iterator();
-			while (iter2.hasNext()) {
-				Entry<TermIDName, ContextVector> m = iter2.next();
-				TermIDName t = m.getKey();
-				ContextVector cv = m.getValue();
-				String ID = t.getID();
-				// System.out.println(ID);
-				if (StringUtils.equals(ID, "independent_continuant")) {
-					continue;
-				}
-				Term term = myCRAFT.app.id2term.get(ID);
-				List<Term> ancestors = getAncestors(term, myCRAFT.app.id2term,
-						d);
-				if (ancestors.size() > 0) {
-					ContextVector cvParent = null;
-					for (Term parentTerm : ancestors) {
-						String parent = parentTerm.getID();
+			if (!isLargeContextVector(cv, threshold)) {
+				continue;
+			}
+			
+			String ID = t.getID();
+			// System.out.println(ID);
+			if (StringUtils.equals(ID, "independent_continuant")) {
+				continue;
+			}
+			Term term = id2term.get(ID);
+			List<Term> ancestors = getAncestors(term, id2term, d);
 
-						// if (term.is_a.size() > 0) {
-						// ContextVector cvParent = null;
-						//
-						// for (String parent : term.is_a) {
-						if (termAndContextVector.containsKey(new TermIDName(
-								parent, ""))) {
-							// System.out.println("[Parent Child Pair]");
-							// System.out.println("\t" + term.getID() + " IS_A "
-							// + parent);
-							// System.out.println("\tParent:");
-							// System.out.println("\t" + parent);
-							// System.out.println(termAndContextVector.get(
-							// new TermIDName(parent, "")).toString());
-							// System.out.println("\tChild:");
-							// System.out.println("\t" + term.getID());
-							// System.out.println(termAndContextVector.get(
-							// new TermIDName(term.getID(), ""))
-							// .toString());
-
-							cvParent = termAndContextVector.get(new TermIDName(
-									parent, ""));
-
-							ContextVector normalizedParent = cvParent
-									.getNormalized();
-							ContextVector normalizedChild = cv.getNormalized();
-
-							double cosineSimilarity = ContextVector
-									.computeCosineSimilarity(normalizedParent,
-											normalizedChild);
-							// System.out.println(String.format("\t[%d]%f",
-							// count, cosineSimilarity));
-							parentChildCosineSimilarity = parentChildCosineSimilarity
-									+ cosineSimilarity;
-							// System.out.println(String.format("\t[%d]%f, %f",
-							// count, parentChildCosineSimilarity,
-							// cosineSimilarity));
-							count++;
-
+			List<ContextVector> contextVectors = new ArrayList<ContextVector>();
+			if (ancestors.size() > 0) {
+				ContextVector cvParent = null;
+				for (Term parentTerm : ancestors) {
+					String parent = parentTerm.getID();
+					if (termAndContextVector.containsKey(new TermIDName(
+							parent, ""))) {
+						cvParent = termAndContextVector.get(new TermIDName(
+								parent, ""));
+						if (isLargeContextVector(cvParent, threshold)) {
+							contextVectors.add(cvParent);
 						}
 					}
 				}
-
+				List<Double> subScores = computeCosineSimilarityScoresForOnevsAll(
+						cv, contextVectors, 0, contextVectors.size());
+				cosineSimilarityScores.addAll(subScores);
 			}
-			parentChildCosineSimilarity /= ((double) count);
-			System.out.println(String.format(
-					"[Depth: %d] parentChildCosineSimilarity", d));
-			System.out.println(parentChildCosineSimilarity);
 		}
+		
+		return cosineSimilarityScores;
 	}
 
-	public static double computeAveragedCosineSimilarity(
-			List<ContextVector> contextVectors) {
-		double averagedCosineSimilarity = 0;
-		int size = contextVectors.size();
-		int count = 0;
+	public static List<Double> computeCosineSimilarityScoresForOnevsAll(
+			ContextVector cv1, List<ContextVector> contextVectors, int start,
+			int end) {
+		List<Double> cosineSimilarityScores = new ArrayList<Double>();
+		ContextVector normalizedCV1 = cv1.getNormalized();
 
-		ContextVector cvx = contextVectors.get(0);
-		ContextVector normalizedCVx = cvx.getNormalized();
-		// double cosineSimilarity =
-		// ContextVector.computeCosineSimilarity(normalizedCVx, normalizedCVx);
+		int count = 0;
+		for (int j = start; j < end; j++) {
+			ContextVector cv2 = contextVectors.get(j);
+			ContextVector normalizedCV2 = cv2.getNormalized();
+
+			double cosineSimilarity = ContextVector.computeCosineSimilarity(
+					normalizedCV1, normalizedCV2);
+
+			cosineSimilarityScores.add(cosineSimilarity);
+			count++;
+		}
+
+		return cosineSimilarityScores;
+	}
+
+	public static List<Double> computeCosineSimilarityScoresForAllvsAll(
+			List<ContextVector> contextVectors) {
+		List<Double> cosineSimilarityScores = new ArrayList<Double>();
 
 		for (int i = 0; i < contextVectors.size() - 1; i++) {
 			ContextVector cv1 = contextVectors.get(i);
-			ContextVector normalizedCV1 = cv1.getNormalized();
-
-			for (int j = i + 1; j < contextVectors.size(); j++) {
-				ContextVector cv2 = contextVectors.get(j);
-				ContextVector normalizedCV2 = cv2.getNormalized();
-
-				double cosineSimilarity = ContextVector
-						.computeCosineSimilarity(normalizedCV1, normalizedCV2);
-
-//				System.out.println(String.format("\t[%d]%f", count,
-//						cosineSimilarity));
-
-				averagedCosineSimilarity += cosineSimilarity;
-				count++;
-			}
+			List<Double> subCosineSimilarityScores = computeCosineSimilarityScoresForOnevsAll(
+					cv1, contextVectors, i + 1, contextVectors.size());
+			cosineSimilarityScores.addAll(subCosineSimilarityScores);
 		}
 
-		averagedCosineSimilarity /= ((double) count);
-
-		return averagedCosineSimilarity;
+		return cosineSimilarityScores;
 	}
 
 	public static List<Term> getAncestors(Term term, Map<String, Term> id2term,
@@ -200,5 +237,10 @@ public class Exp2 {
 		}
 
 		return curLevel;
+	}
+
+	public static boolean isLargeContextVector(ContextVector cv, int threshold) {
+		cv.updateTotal();
+		return cv.total >= threshold;
 	}
 }
