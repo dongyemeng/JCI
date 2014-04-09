@@ -92,7 +92,52 @@ public class Plotter {
 		}
 	}
 	
+	// For how to make Q-Q plot, refer to:
+	// http://www.sinknode.com/blog/?p=9
+	public void QQPlotWithNormal(String name, List<List<Double>> datas,
+			String title, String xTitle, String yTitle, String[] seriesNames,
+			boolean isFixedRadio, boolean isSave) {
 
+		// Create Chart
+		Chart chart = new ChartBuilder().width(800).height(600).title(title)
+				.xAxisTitle(xTitle).yAxisTitle(yTitle).build();
+
+		// Customize Chart
+		chart.getStyleManager().setChartTitleVisible(true);
+
+		for (int i = 0; i < datas.size(); i++) {
+			List<Double> data = datas.get(i);
+			if (data.size() > 0) {
+				Collections.sort(data);
+				List<Number> xData = new ArrayList<Number>();
+				List<Number> yData = new ArrayList<Number>();
+
+				int n = data.size();
+				for (int j = 0; j < n; j++) {
+					int q = j + 1;
+					double x = (((double) q) - 0.5) / ((double) n);
+					double y = data.get(j);
+					xData.add(x);
+					yData.add(y);
+				}
+
+				chart.addSeries(seriesNames[i], xData, yData);
+			}
+		}
+
+		chart.getStyleManager().setLegendPosition(LegendPosition.InsideNW);
+
+		new SwingWrapper(chart).displayChart();
+
+		if (isSave) {
+			try {
+				BitmapEncoder.savePNG(chart, name);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	public void makeScatter(String name, List<Number> xData,
 			List<Number> yData, String title, String xTitle, String yTitle,
@@ -199,7 +244,6 @@ public class Plotter {
 		}
 
 	}
-	
 	
 
 	public static void main(String[] args) {

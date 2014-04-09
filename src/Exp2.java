@@ -26,24 +26,34 @@ public class Exp2 {
 	public static void main(String[] args) {
 		String ontologyName = "SO";
 //		ontologyName = "PR";
-//		ontologyName = "NCBITaxon"; NOT work
+		// ontologyName = "NCBITaxon"; NOT work
 //		ontologyName = "GO_CC";
 //		ontologyName = "GO_BPMF";
 //		ontologyName = "CL";
 //		ontologyName = "CHEBI";
-		
 
 		String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 		CRAFT myCRAFT = new CRAFT(dir, ontologyName);
 		List<String> ids = myCRAFT.getArticleIDs();
 		int windowSize = 10;
 		int threshold = 50;
-		int maxDepth = 10;
+
 		Plotter myPlot = new Plotter();
-		
+
+		int depthStart = 1;
+		int depthNum = 20;
+		int depthInterval = 1;
+		int[] depths = new int[depthNum];
+		for (int i = 0; i < depthNum; i++) {
+			depths[i] = depthStart + i * depthInterval;
+		}
+
+		List<List<Double>> cosineSimilarityScoresAll = new ArrayList<List<Double>>();
+		String[] seriesNames = new String[depthNum + 1];
+
 		System.out.println("Ontology: " + ontologyName);
 		System.out.println("Threshold: " + threshold);
-		
+
 		// Part I:
 		boolean part1 = true;
 
@@ -83,57 +93,71 @@ public class Exp2 {
 
 			Collections.sort(cosineSimilarityScores);
 
-//			System.out.println(cosineSimilarityScores.size());
-			
-			myPlot.makeQQPlot(
-					"QQplot of cosine similarity scores between all pairs of terms.png",
-					cosineSimilarityScores,
-					"QQplot of cosine similarity scores between all pairs of terms",
-					"Count", "cumulative scores",
-					"cosine similarity scores between all pairs of terms",
-					false, true);
+			// System.out.println(cosineSimilarityScores.size());
+
+			// myPlot.makeQQPlot(
+			// "QQplot of cosine similarity scores between all pairs of terms.png",
+			// cosineSimilarityScores,
+			// "QQplot of cosine similarity scores between all pairs of terms",
+			// "Count", "cumulative scores",
+			// "cosine similarity scores between all pairs of terms",
+			// false, true);
 
 			double averagedCosineSimilarity = ListUtility
 					.computeAverage(cosineSimilarityScores);
 			System.out.println("averagedCosineSimilarity");
 			System.out.println(averagedCosineSimilarity);
+
+			cosineSimilarityScoresAll.add(cosineSimilarityScores);
+			seriesNames[0] = "All vs. All";
 		}
 
 		// Part II: cosine similarity between parent and child
 		System.out.println("Computing parent-child cosine similarity...");
-		
 
 		List<List<Double>> cosineSimilarityScoresList = new ArrayList<List<Double>>();
-		for (int d = 1; d <= maxDepth; d++) {
-			List<Double> cosineSimilarityScores = computeCosineSimilarityScoresWithDepthFixed(termAndContextVector, myCRAFT.app.id2term, d, threshold);
+
+		int i = 1;
+		for (int d : depths) {
+			List<Double> cosineSimilarityScores = computeCosineSimilarityScoresWithDepthFixed(
+					termAndContextVector, myCRAFT.app.id2term, d, threshold);
 			cosineSimilarityScoresList.add(cosineSimilarityScores);
+			seriesNames[i] = "Depth: " + d;
+			i++;
 		}
-		
+		cosineSimilarityScoresAll.addAll(cosineSimilarityScoresList);
+
 		// Print out averaged scores
-		for (int i = 0; i < cosineSimilarityScoresList.size(); i++) {
-			List<Double> cosineSimilarityScores = cosineSimilarityScoresList.get(i);
-			Collections.sort(cosineSimilarityScores);
-			if (i==12)
-			System.out.println(i);
-			if (cosineSimilarityScores.size() > 0) {
-				myPlot.makeQQPlot(
-						String.format("QQplot_depth_%d_threshold_%d.png",
-								i + 1, threshold),
-						cosineSimilarityScores,
-						String.format(
-								"QQplot of cosine similarity scores between terms and their ancestors of distance %d (Both the term and its ancestors have at least %d context words)",
-								i + 1, threshold), "Count",
-						"cumulative scores", "cosine similarity scores", false,
-						true);
-				double averagedScore = ListUtility
-						.computeAverage(cosineSimilarityScores);
-				System.out.println(String.format(
-						"Depth: %d, averaged score: %f", i + 1, averagedScore));
-			}
-		}
-		
+		// for (int i = 0; i < cosineSimilarityScoresList.size(); i++) {
+		// List<Double> cosineSimilarityScores =
+		// cosineSimilarityScoresList.get(i);
+		// Collections.sort(cosineSimilarityScores);
+		// if (i==12)
+		// System.out.println(i);
+		// if (cosineSimilarityScores.size() > 0) {
+		// myPlot.makeQQPlot(
+		// String.format("QQplot_depth_%d_threshold_%d.png",
+		// i + 1, threshold),
+		// cosineSimilarityScores,
+		// String.format(
+		// "QQplot of cosine similarity scores between terms and their ancestors of distance %d (Both the term and its ancestors have at least %d context words)",
+		// i + 1, threshold), "Count",
+		// "cumulative scores", "cosine similarity scores", false,
+		// true);
+		// double averagedScore = ListUtility
+		// .computeAverage(cosineSimilarityScores);
+		// System.out.println(String.format(
+		// "Depth: %d, averaged score: %f", i + 1, averagedScore));
+		// }
+		// }
+
+		myPlot.QQPlotWithNormal(String.format("%s_Q-Q plot.png", ontologyName),
+				cosineSimilarityScoresAll, "Normal Q–Q plot",
+				"Normal quantiles", "Cosine similarity scores quantiles",
+				seriesNames, false, true);
+
 	}
-	
+
 	private static List<Double> computeCosineSimilarityScoresWithDepthFixed(
 			Map<TermIDName, ContextVector> termAndContextVector,
 			Map<String, Term> id2term, int d, int threshold) {
@@ -145,11 +169,11 @@ public class Exp2 {
 			Entry<TermIDName, ContextVector> m = iter2.next();
 			TermIDName t = m.getKey();
 			ContextVector cv = m.getValue();
-			
+
 			if (!isLargeContextVector(cv, threshold)) {
 				continue;
 			}
-			
+
 			String ID = t.getID();
 			// System.out.println(ID);
 			if (StringUtils.equals(ID, "independent_continuant")) {
@@ -163,8 +187,8 @@ public class Exp2 {
 				ContextVector cvParent = null;
 				for (Term parentTerm : ancestors) {
 					String parent = parentTerm.getID();
-					if (termAndContextVector.containsKey(new TermIDName(
-							parent, ""))) {
+					if (termAndContextVector.containsKey(new TermIDName(parent,
+							""))) {
 						cvParent = termAndContextVector.get(new TermIDName(
 								parent, ""));
 						if (isLargeContextVector(cvParent, threshold)) {
@@ -177,7 +201,7 @@ public class Exp2 {
 				cosineSimilarityScores.addAll(subScores);
 			}
 		}
-		
+
 		return cosineSimilarityScores;
 	}
 
