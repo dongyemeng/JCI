@@ -3,6 +3,8 @@ package utility;
 import java.io.*;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import jci.Term;
 
 // Source URL: https://gist.github.com/lindenb/2762967
@@ -24,9 +26,9 @@ public class Biostar45366 {
 		return set;
 	}
 
-	private Term getTermById(String id, boolean create) {
+	public Term getTermById(String id, boolean isCreate) {
 		Term t = this.id2term.get(id);
-		if (t == null && create) {
+		if (t == null && isCreate) {
 			t = new Term();
 			t.id = id;
 			t.name = id;
@@ -35,7 +37,87 @@ public class Biostar45366 {
 		}
 		return t;
 	}
+	
+	/**
+	 * Given the IDs of two terms A and B, and the maximum distance, check if B
+	 * is an ancestor of A within the maximum distance
+	 * 
+	 * @param IDA
+	 *            ID of term A
+	 * @param IDB
+	 *            ID of term B
+	 * @param distance
+	 *            Maximum distance between A and B
+	 * @return If B is an ancestor of A with a distance less than the maximum,
+	 *         then return the distance between the given term and this term;
+	 *         otherwise return -1
+	 */
+	public int isAncestor(String IDA, String IDB, int distance){
+		int curDist = 1;
+		Term termA = this.id2term.get(IDA);
+		List<Term> curLevel = new ArrayList<Term>();
+		List<Term> nextLevel = new ArrayList<Term>();
+		curLevel.add(termA);
+		while (curDist <= distance) {
+			
+			for (Term t : curLevel) {
+				Set<String> parentIDs = t.is_a;
+				for (String ID : parentIDs) {
+					if (StringUtils.equals(ID, IDB)) {
+						return curDist;
+					}
+					Term parent = this.id2term.get(ID);
+					nextLevel.add(parent);
+				}
+			}
+			curLevel = nextLevel;
+			nextLevel = new ArrayList<Term>();
+			curDist++;
+		}
+		
+		return -1;
+	}
 
+	/**
+	 * Given the IDs of two terms A and B, and the maximum distance, check if B
+	 * is a descendent of A within the maximum distance
+	 * 
+	 * @param IDA
+	 *            ID of term A
+	 * @param IDB
+	 *            ID of term B
+	 * @param distance
+	 *            Maximum distance between A and B
+	 * @return If B is a descendent of A with a distance less than the maximum,
+	 *         then return the distance between the given term and this term;
+	 *         otherwise return -1
+	 */
+	public int isDescendent(String IDA, String IDB, int distance){
+		int curDist = 1;
+		Term termA = this.id2term.get(IDA);
+		List<Term> curLevel = new ArrayList<Term>();
+		List<Term> nextLevel = new ArrayList<Term>();
+		curLevel.add(termA);
+		while (curDist <= distance) {
+			
+			for (Term t : curLevel) {
+				Set<String> childrenIDs = t.children;
+				for (String ID : childrenIDs) {
+					if (StringUtils.equals(ID, IDB)) {
+						return curDist;
+					}
+					Term parent = this.id2term.get(ID);
+					nextLevel.add(parent);
+				}
+			}
+			curLevel = nextLevel;
+			nextLevel = new ArrayList<Term>();
+			curDist++;
+		}
+		
+		return -1;
+	}
+	
 	private static String nocomment(String s) {
 		int excl = s.indexOf('!');
 		if (excl != -1)

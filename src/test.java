@@ -54,7 +54,7 @@ public class test {
 		boolean task1 = false;
 		boolean task1_scatter = false;
 		
-		// compute the # of terms for each ontoloty
+		// compute the # of terms for each ontology
 		boolean task2 = false;
 		
 		// test xChart
@@ -64,16 +64,18 @@ public class test {
 		boolean task4 = false;
 		
 		// make the mutation train arff file
-		boolean task5 = false;
+		boolean task5 = true;
 		List<Instance> mutationIns = new LinkedList<Instance>();
+		
+		// make the mutation unknown arff file
+
 		
 		boolean task6 = false;
 		
-		// make the mutation unknown arff file
-		boolean task7 = false;
+		
 		
 		// make the count vs depth plot
-		boolean task8 = true;
+		boolean task8 = false;
 		
 		String ontologyName = "CHEBI";
 		ontologyName = "CL";
@@ -84,7 +86,7 @@ public class test {
 //		ontologyName = "PR";
 		ontologyName = "SO";
 		
-		boolean task10 = true;
+		boolean task10 = false;
 
 		if (task1) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
@@ -308,16 +310,61 @@ public class test {
 			int windowSize = 10;
 			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
 			List<TermOccurrence> allOccurrences = new LinkedList<TermOccurrence>(); 
+			
 			List<TermOccurrence> mutationOcrs = new LinkedList<TermOccurrence>(); 
+			
+			// Get term so:0001059 (mutation/mutations)
+			String targetID1 = "so:0001059";
+			String targetID2 = "so:0000041";
+			Term mutation1 = myCRAFT.app.getTermById(targetID1, false);
+			Term mutation2 = myCRAFT.app.getTermById(targetID2, false);
+			
+			
+			
+			List<TermOccurrence> parentOcrs1 = new ArrayList<TermOccurrence>();
+			List<TermOccurrence> childOcrs1 = new ArrayList<TermOccurrence>();
+			List<TermOccurrence> neighborOcrs1 = new ArrayList<TermOccurrence>();
+			
+			List<TermOccurrence> parentOcrs2 = new ArrayList<TermOccurrence>();
+			List<TermOccurrence> childOcrs2 = new ArrayList<TermOccurrence>();
+			List<TermOccurrence> neighborOcrs2 = new ArrayList<TermOccurrence>();
+			
+			List<Instance> neighborIns1 = new ArrayList<Instance>();
+			List<Instance> neighborIns2 = new ArrayList<Instance>();
 			
 			for (String id : ids) {
 				AnnotatedArticle myArticle = myCRAFT.getArticle(id);
 				myArticle.process(windowSize / 2);
 				List<TermOccurrence> ocrs = new ArrayList<TermOccurrence>();
+
+				int dist = 1;
+				
 				for (TermOccurrence ocr : myArticle.occurrences) {
 					if (StringUtils.equals(ocr.name, "mutation") || StringUtils.equals(ocr.name, "mutations")) {
 						int c = myArticle.getCount(ocr.cv);
 						ocrs.add(ocr);
+					}
+					
+					int d = -1;
+					
+					d = myCRAFT.app.isAncestor(targetID1, ocr.id, dist); 
+					if (d > 0) {
+						parentOcrs1.add(ocr);
+					}
+					
+					d = myCRAFT.app.isAncestor(targetID2, ocr.id, dist);
+					if (d > 0) {
+						parentOcrs2.add(ocr);
+					}
+					
+					d = myCRAFT.app.isDescendent(targetID1, ocr.id, dist);
+					if (d > 0) {
+						childOcrs1.add(ocr);
+					}
+					
+					d = myCRAFT.app.isDescendent(targetID2, ocr.id, dist);
+					if (d > 0) {
+						childOcrs2.add(ocr);
 					}
 				}
 				System.out.println("ID: "+id);
@@ -327,18 +374,62 @@ public class test {
 				allOccurrences.addAll(myArticle.occurrences);
 				
 			}
-			Map<String, Set<String>> dict = getDict(allOccurrences);
-			Map<String, List<TermOccurrence>> dict2 = getDict2(allOccurrences);
-			Map<String, Set<String>> dup = getDuplicates(dict);
-			Map<String, Map<String, List<TermOccurrence>>> dup2 = getDuplicates2(dict2, dup);
+//			Map<String, Set<String>> dict = getDict(allOccurrences);
+//			Map<String, List<TermOccurrence>> dict2 = getDict2(allOccurrences);
+//			Map<String, Set<String>> dup = getDuplicates(dict);
+//			Map<String, Map<String, List<TermOccurrence>>> dup2 = getDuplicates2(dict2, dup);
+//			
+//			printStat(dup2);
 			
-			printStat(dup2);
+			neighborOcrs1.addAll(childOcrs1);
+			neighborOcrs1.addAll(parentOcrs1);
+			
+			neighborOcrs2.addAll(childOcrs2);
+			neighborOcrs2.addAll(parentOcrs2);
 			
 			mutationIns = Utility.termOccurrencesToInstances(mutationOcrs);
-			List<String> wordList = Utility.getWordList(mutationIns);
-//			Utility.instancesToARFF(mutationIns, "data/mutation_train.arff");
-			System.out.println();
 			
+
+			neighborIns1 = Utility.termOccurrencesToInstances(neighborOcrs1);
+			neighborIns2 = Utility.termOccurrencesToInstances(neighborOcrs2);
+			
+			List<String> wordList = Utility.getWordList(mutationIns);
+			System.out.println();
+
+			List<Instance> allInstances = new LinkedList<Instance>();
+			String folderDir = "C:/Users/Dongye/Dropbox/2013 fall/big data/project/articles/nxml/";
+			folderDir = "C:/Users/Dongye/Documents/2013 fall/big data/project/articles/nxml/";
+			File folder = new File(folderDir);
+			File[] listOfFiles = folder.listFiles();
+
+			for (File file : listOfFiles) {
+			    if (file.isFile()) {
+			        System.out.println(file.getName());
+					String article_dir = folderDir+file.getName();
+					UnannotatedArticle art = new UnannotatedArticle(article_dir);
+					List<Instance> ins = art.extractInstances("mutation", 5);
+					List<Instance> ins2 = art.extractInstances("mutations", 5);
+					allInstances.addAll(ins);
+					allInstances.addAll(ins2);
+					System.out.println();
+					
+			    }
+			}
+			
+			System.out.println(allInstances.size());
+			
+			LinkedList<Instance> combinedIns = new LinkedList<Instance>();
+			combinedIns.addAll(mutationIns);
+			combinedIns.addAll(allInstances);
+			combinedIns.addAll(neighborIns1);
+			combinedIns.addAll(neighborIns2);
+			List<String> featureList = Utility.getWordList(combinedIns);
+			
+			Utility.instancesToARFFOneClass(neighborIns1, "c1", featureList, "data/neighbors1_train.arff");
+			Utility.instancesToARFFOneClass(neighborIns2, "c2", featureList, "data/neighbors2_train.arff");
+			
+			Utility.instancesToARFF(mutationIns, featureList, "data/mutation_train.arff");
+			Utility.instancesToARFF(allInstances, featureList, "data/mutation_unknown.arff");
 		}
 		
 		if (task6) {
@@ -375,35 +466,7 @@ public class test {
 			}
 		}
 		
-		if (task7) {
-			List<Instance> allInstances = new LinkedList<Instance>();
-			String folderDir = "C:/Users/Dongye/Dropbox/2013 fall/big data/project/articles/nxml/";
-			File folder = new File(folderDir);
-			File[] listOfFiles = folder.listFiles();
 
-			for (File file : listOfFiles) {
-			    if (file.isFile()) {
-			        System.out.println(file.getName());
-					String dir = folderDir+file.getName();
-					UnannotatedArticle art = new UnannotatedArticle(dir);
-					List<Instance> ins = art.extractInstances("mutation", 5);
-					List<Instance> ins2 = art.extractInstances("mutations", 5);
-					allInstances.addAll(ins);
-					allInstances.addAll(ins2);
-					System.out.println();
-					
-			    }
-			}
-			
-			System.out.println(allInstances.size());
-			
-			LinkedList<Instance> combinedIns = new LinkedList<Instance>();
-			combinedIns.addAll(mutationIns);
-			combinedIns.addAll(allInstances);
-			List<String> featureList = Utility.getWordList(combinedIns);
-			Utility.instancesToARFF(mutationIns, featureList, "data/mutation_train.arff");
-			Utility.instancesToARFF(allInstances, featureList, "data/mutation_unknown.arff");
-		}
 		
 		if (task8) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
