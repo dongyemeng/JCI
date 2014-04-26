@@ -1,5 +1,8 @@
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,7 +67,7 @@ public class test {
 		boolean task4 = false;
 		
 		// make the mutation train arff file
-		boolean task5 = true;
+		boolean task5 = false;
 		List<Instance> mutationIns = new LinkedList<Instance>();
 		
 		// make the mutation unknown arff file
@@ -80,14 +83,43 @@ public class test {
 		String ontologyName = "CHEBI";
 		ontologyName = "CL";
 		ontologyName = "GO_BPMF";
-		ontologyName = "GO_CC";
+//		ontologyName = "GO_CC";
 		
 //		ontologyName = "NCBITaxon";
 //		ontologyName = "PR";
-		ontologyName = "SO";
+//		ontologyName = "SO";
 		
 		boolean task10 = false;
+		
+		// Compute TermOccrsSharingName: Map<Name, Map<TermID, Occrs>>
+		boolean task11 = true;
 
+		
+		
+		int winSize = 10;
+		String CRAFTDir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
+		int threshold = 10;
+		String outputFile = String.format("%s_Duplicated Terms_%d.txt", ontologyName, threshold);
+		
+		
+		if (task11) {
+			String output = findAllDupOccrs(CRAFTDir, ontologyName, winSize, threshold);
+			System.out.println(output);
+			
+			PrintWriter writer = null;
+			try {
+				writer = new PrintWriter(outputFile, "UTF-8");
+				writer.println(output);
+				writer.close();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
+		
 		if (task1) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
@@ -374,12 +406,12 @@ public class test {
 				allOccurrences.addAll(myArticle.occurrences);
 				
 			}
-//			Map<String, Set<String>> dict = getDict(allOccurrences);
-//			Map<String, List<TermOccurrence>> dict2 = getDict2(allOccurrences);
-//			Map<String, Set<String>> dup = getDuplicates(dict);
-//			Map<String, Map<String, List<TermOccurrence>>> dup2 = getDuplicates2(dict2, dup);
-//			
-//			printStat(dup2);
+			Map<String, Set<String>> nameToIDs = computeNameToIDs(allOccurrences);
+			Map<String, List<TermOccurrence>> nameToOcrs = computeNameToOccrs(allOccurrences);
+			Map<String, Set<String>> dupNameToIDs = getDuplicates(nameToIDs);
+			Map<String, Map<String, List<TermOccurrence>>> termOccrsSharingName = computeTermOccrSharingName(nameToOcrs, dupNameToIDs);
+			
+			printStat(termOccrsSharingName, 0);
 			
 			neighborOcrs1.addAll(childOcrs1);
 			neighborOcrs1.addAll(parentOcrs1);
@@ -587,48 +619,90 @@ public class test {
 	}
 	
 
+	private static String findAllDupOccrs(String CRAFTDir, String ontologyName, int winSize, int threshold) {
+		String dir = CRAFTDir;
+		CRAFT myCRAFT = new CRAFT(dir, ontologyName);
+		List<String> ids = myCRAFT.getArticleIDs();
+		int windowSize = winSize;
+		List<TermOccurrence> allOccurrences = new LinkedList<TermOccurrence>();
 
-	private static void printStat(
-			Map<String, Map<String, List<TermOccurrence>>> dup2) {
-		Iterator<String> iter = dup2.keySet().iterator();
+		for (String id : ids) {
+			AnnotatedArticle myArticle = myCRAFT.getArticle(id);
+			myArticle.process(windowSize / 2);
+			allOccurrences.addAll(myArticle.occurrences);
+
+		}
+		Map<String, Set<String>> nameToIDs = computeNameToIDs(allOccurrences);
+		Map<String, List<TermOccurrence>> nameToOcrs = computeNameToOccrs(allOccurrences);
+		Map<String, Set<String>> dupNameToIDs = getDuplicates(nameToIDs);
+		Map<String, Map<String, List<TermOccurrence>>> termOccrsSharingName = computeTermOccrSharingName(
+				nameToOcrs, dupNameToIDs);
+
+		String output = printStat(termOccrsSharingName, threshold);
+		
+		return output;
+	}
+
+	private static String printStat(
+			Map<String, Map<String, List<TermOccurrence>>> termOccrsSharingName, int threshold) {
+		StringBuilder sb = new StringBuilder();
+
+		Iterator<String> iter = termOccrsSharingName.keySet().iterator();
 		while (iter.hasNext()) {
 			String name = iter.next();
-			Map<String, List<TermOccurrence>> map = dup2.get(name);
-			System.out.println("[Name] "+name);
+			Map<String, List<TermOccurrence>> map = termOccrsSharingName
+					.get(name);
+			boolean isLarge = true;
+			String temp = "";
+			temp = "[Name] " + name + "\n";
 			Iterator<String> idIter = map.keySet().iterator();
 			while (idIter.hasNext()) {
 				String id = idIter.next();
 				List<TermOccurrence> ocrs = map.get(id);
-				System.out.println("\t[ID] "+id);
-				System.out.println("\t[Num] "+ocrs.size());
-				System.out.println();
+				temp = temp + "\t[ID] " + id + "\n";
+				temp = temp + "\t[Num] " + ocrs.size() + "\n\n"; 
+				if (ocrs.size() < threshold) {
+					isLarge = false;
+				}
+			}
+			if (isLarge) {
+				sb.append(temp);
 			}
 		}
+
+		return sb.toString();
 	}
 
-	public static Map<String, Set<String>> getDuplicates(Map<String, Set<String>> dict) {
-		Map<String,Set<String>> dup = new HashMap<String, Set<String>>();
-		Iterator<String> iter = dict.keySet().iterator();
+	public static Map<String, Set<String>> getDuplicates(Map<String, Set<String>> nameToIDs) {
+		Map<String,Set<String>> dupNametoIDs = new HashMap<String, Set<String>>();
+		Iterator<String> iter = nameToIDs.keySet().iterator();
 		while (iter.hasNext()) {
 			String name = iter.next();
-			Set<String> ids = dict.get(name);
+			Set<String> ids = nameToIDs.get(name);
 			if (ids.size() > 1) {
-				dup.put(name, ids);
+				dupNametoIDs.put(name, ids);
 			}
 		}
 		
-		return dup;
+		return dupNametoIDs;
 	}
 	
-	private static Map<String, Map<String, List<TermOccurrence>>> getDuplicates2(
-			Map<String, List<TermOccurrence>> dict2,
-			Map<String, Set<String>> dup) {
+	/**
+	 * Compute the Map<Name, Map<Term ID, Occurrences>>
+	 * 
+	 * @param nameToOcrs
+	 * @param dupNameToIDs
+	 * @return a map
+	 */
+	private static Map<String, Map<String, List<TermOccurrence>>> computeTermOccrSharingName(
+			Map<String, List<TermOccurrence>> nameToOcrs,
+			Map<String, Set<String>> dupNameToIDs) {
 		HashMap<String, Map<String, List<TermOccurrence>>> res = new HashMap<String, Map<String, List<TermOccurrence>>>();
 		
-		Iterator<String> iter = dup.keySet().iterator();
+		Iterator<String> iter = dupNameToIDs.keySet().iterator();
 		while (iter.hasNext()) {
 			String name = iter.next();
-			List<TermOccurrence> ocrs = dict2.get(name);
+			List<TermOccurrence> ocrs = nameToOcrs.get(name);
 			Map<String, List<TermOccurrence>> map = new HashMap<String, List<TermOccurrence>>();
 			for (TermOccurrence ocr : ocrs) {
 				String id = ocr.id;
@@ -647,7 +721,14 @@ public class test {
 		return res;
 	}
 
-	public static Map<String, Set<String>> getDict(List<TermOccurrence> occurrences) {
+	/**
+	 * Make a map maps any name to a set of ids where there is a occurrence of a
+	 * term with that id and expressed by that name
+	 * 
+	 * @param occurrences
+	 * @return a map
+	 */
+	public static Map<String, Set<String>> computeNameToIDs(List<TermOccurrence> occurrences) {
 		Map<String,Set<String>> dict = new HashMap<String, Set<String>>();
 		for (TermOccurrence ocr : occurrences) {
 			String id = ocr.id;
@@ -665,7 +746,14 @@ public class test {
 		return dict;		
 	}
 	
-	public static Map<String, List<TermOccurrence>> getDict2(List<TermOccurrence> occurrences) {
+	
+	/**
+	 * Make a map maps any name to a list of occurrences of that name
+	 * 
+	 * @param occurrences
+	 * @return a map
+	 */
+	public static Map<String, List<TermOccurrence>> computeNameToOccrs(List<TermOccurrence> occurrences) {
 		Map<String, List<TermOccurrence>> dict = new HashMap<String, List<TermOccurrence>>();
 		for (TermOccurrence ocr : occurrences) {
 			String name = ocr.name;
