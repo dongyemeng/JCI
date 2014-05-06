@@ -147,12 +147,66 @@ public class Utility {
 		return lineBuilder.toString();
 	}
 
+	public static void instancesToARFF(List<Instance> ins,
+			List<String> featureList, String fileName, String cls, String target) {
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter(fileName, "UTF-8");
+
+			writer.println("");
+			writer.println("@relation 'big data'");
+			for (int i = 0; i < featureList.size(); i++) {
+				writer.println(String.format("@attribute f%d numeric", i));
+			}
+			writer.println("@attribute class {c1, c2, unknown}");
+			writer.println("\n");
+			writer.println("@data");
+			for (Instance in : ins) {
+				String line = instanceToString(featureList, in, cls, target);
+				if (line != null) {
+					writer.println(line);
+				}
+			}
+
+			writer.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private static String instanceToString(List<String> featureList,
+			Instance in, String cls, String target) {
+		if (!StringUtils.equals(in.cls, target)) {
+			return null;
+		}
+		
+		StringBuilder lineBuilder = new StringBuilder();
+		for (String feature : featureList) {
+			
+			if (in.cVector.vector.containsKey(feature)) {
+				double count = in.cVector.vector.get(feature);
+				if (count > 10) {
+					System.out.println();
+				}
+				lineBuilder.append(String.format("%f, ", count));
+			}
+			else {
+				lineBuilder.append("0, ");
+			}
+		}
+		
+		lineBuilder.append(cls);
+		
+		return lineBuilder.toString();
+	}
+
 
 
 	public static void instancesToARFF(List<Instance> ins, List<String> featureList, String fileName) {
-		
-		
-		
 		PrintWriter writer = null;
 		try {
 			writer = new PrintWriter(fileName, "UTF-8");

@@ -171,7 +171,7 @@ public class Exp2 {
 				depthNumbers.add(d);
 
 				cosineSimilarityScoresList.add(cosineSimilarityScores);
-				seriesNames[i] = "Depth: " + d;
+				seriesNames[i] = "Distance: " + d;
 				i++;
 			}
 		}
@@ -201,22 +201,22 @@ public class Exp2 {
 		// }
 		// }
 
-//		myPlot.QQPlotWithNormal(String.format("%s_Q-Q plot.png", ontologyName),
-//				cosineSimilarityScoresAll, "Normal Q–Q plot",
-//				"Normal quantiles", "Cosine similarity scores quantiles",
-//				seriesNames, false, true);
+		myPlot.QQPlotWithNormal(String.format("%s_Q-Q plot.png", ontologyName),
+				cosineSimilarityScoresAll, String.format("%s", ontologyName),
+				"Quantiles", "Cosine similarity scores",
+				seriesNames, false, true);
 		
-		// Plot # of pairs of terms available at a distance vs. distance
-		myPlot.makePlot(String.format(
-				"%s_# of pairs of terms vs. distance.png", ontologyName), 
-				depthNumbers, 
-				sizes,
-				String.format("# of pairs of terms vs. distance (%s)", ontologyName), 
-				"Distance",
-				"# of pairs of terms",
-				"# of pairs of terms", 
-				false, 
-				true);
+//		// Plot # of pairs of terms available at a distance vs. distance
+//		myPlot.makePlot(String.format(
+//				"%s_# of pairs of terms vs. distance.png", ontologyName), 
+//				depthNumbers, 
+//				sizes,
+//				String.format("# of pairs of terms vs. distance (%s)", ontologyName), 
+//				"Distance",
+//				"# of pairs of terms",
+//				"# of pairs of terms", 
+//				false, 
+//				true);
 //		
 //		// Plot means vs. distance
 //		myPlot.makePlot(String.format(

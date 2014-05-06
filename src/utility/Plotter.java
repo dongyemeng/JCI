@@ -126,6 +126,12 @@ public class Plotter {
 		}
 
 		chart.getStyleManager().setLegendPosition(LegendPosition.InsideNW);
+		
+		chart.getStyleManager().setYAxisMin(0);
+		chart.getStyleManager().setYAxisMax(1);
+		 
+		chart.getStyleManager().setXAxisMin(0);
+		chart.getStyleManager().setXAxisMax(1);
 
 		new SwingWrapper(chart).displayChart();
 

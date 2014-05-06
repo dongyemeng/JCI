@@ -67,7 +67,7 @@ public class test {
 		boolean task4 = false;
 		
 		// make the mutation train arff file
-		boolean task5 = false;
+		boolean task5 = true;
 		List<Instance> mutationIns = new LinkedList<Instance>();
 		
 		// make the mutation unknown arff file
@@ -87,12 +87,12 @@ public class test {
 		
 //		ontologyName = "NCBITaxon";
 //		ontologyName = "PR";
-//		ontologyName = "SO";
+		ontologyName = "SO";
 		
 		boolean task10 = false;
 		
 		// Compute TermOccrsSharingName: Map<Name, Map<TermID, Occrs>>
-		boolean task11 = true;
+		boolean task11 = false;
 
 		
 		
@@ -461,6 +461,8 @@ public class test {
 			Utility.instancesToARFFOneClass(neighborIns2, "c2", featureList, "data/neighbors2_train.arff");
 			
 			Utility.instancesToARFF(mutationIns, featureList, "data/mutation_train.arff");
+			Utility.instancesToARFF(mutationIns, featureList, "data/mutation_train_class1.arff", "c1", "so:0001059");
+			Utility.instancesToARFF(mutationIns, featureList, "data/mutation_train_class2.arff", "c2", "so:0000041");
 			Utility.instancesToARFF(allInstances, featureList, "data/mutation_unknown.arff");
 		}
 		
