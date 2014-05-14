@@ -44,14 +44,6 @@ import jci.UnannotatedArticle;
 
 public class test {
 
-	public test() {
-		// TODO Auto-generated constructor stub
-	}
-
-	/**
-	 * @param args
-	 * @throws IOException
-	 */
 	public static void main(String[] args) throws IOException {
 		// print parent-child pairs for each ontology
 		boolean task1 = false;
@@ -406,10 +398,10 @@ public class test {
 				allOccurrences.addAll(myArticle.occurrences);
 				
 			}
-			Map<String, Set<String>> nameToIDs = computeNameToIDs(allOccurrences);
-			Map<String, List<TermOccurrence>> nameToOcrs = computeNameToOccrs(allOccurrences);
+			Map<String, Set<String>> nameToIDs = Utility.computeNameToIDs(allOccurrences);
+			Map<String, List<TermOccurrence>> nameToOcrs = Utility.computeNameToOccrs(allOccurrences);
 			Map<String, Set<String>> dupNameToIDs = getDuplicates(nameToIDs);
-			Map<String, Map<String, List<TermOccurrence>>> termOccrsSharingName = computeTermOccrSharingName(nameToOcrs, dupNameToIDs);
+			Map<String, Map<String, List<TermOccurrence>>> termOccrsSharingName = Utility.computeTermOccrSharingName(nameToOcrs, dupNameToIDs);
 			
 			printStat(termOccrsSharingName, 0);
 			
@@ -634,10 +626,10 @@ public class test {
 			allOccurrences.addAll(myArticle.occurrences);
 
 		}
-		Map<String, Set<String>> nameToIDs = computeNameToIDs(allOccurrences);
-		Map<String, List<TermOccurrence>> nameToOcrs = computeNameToOccrs(allOccurrences);
+		Map<String, Set<String>> nameToIDs = Utility.computeNameToIDs(allOccurrences);
+		Map<String, List<TermOccurrence>> nameToOcrs = Utility.computeNameToOccrs(allOccurrences);
 		Map<String, Set<String>> dupNameToIDs = getDuplicates(nameToIDs);
-		Map<String, Map<String, List<TermOccurrence>>> termOccrsSharingName = computeTermOccrSharingName(
+		Map<String, Map<String, List<TermOccurrence>>> termOccrsSharingName = Utility.computeTermOccrSharingName(
 				nameToOcrs, dupNameToIDs);
 
 		String output = printStat(termOccrsSharingName, threshold);
@@ -688,90 +680,5 @@ public class test {
 		
 		return dupNametoIDs;
 	}
-	
-	/**
-	 * Compute the Map<Name, Map<Term ID, Occurrences>>
-	 * 
-	 * @param nameToOcrs
-	 * @param dupNameToIDs
-	 * @return a map
-	 */
-	private static Map<String, Map<String, List<TermOccurrence>>> computeTermOccrSharingName(
-			Map<String, List<TermOccurrence>> nameToOcrs,
-			Map<String, Set<String>> dupNameToIDs) {
-		HashMap<String, Map<String, List<TermOccurrence>>> res = new HashMap<String, Map<String, List<TermOccurrence>>>();
-		
-		Iterator<String> iter = dupNameToIDs.keySet().iterator();
-		while (iter.hasNext()) {
-			String name = iter.next();
-			List<TermOccurrence> ocrs = nameToOcrs.get(name);
-			Map<String, List<TermOccurrence>> map = new HashMap<String, List<TermOccurrence>>();
-			for (TermOccurrence ocr : ocrs) {
-				String id = ocr.id;
-				if (map.containsKey(id)) {
-					map.get(id).add(ocr);
-				}
-				else {
-					List<TermOccurrence> ocrList = new ArrayList<TermOccurrence>();
-					ocrList.add(ocr);
-					map.put(id, ocrList);
-				}
-			}
-			res.put(name, map);
-		}
-		
-		return res;
-	}
-
-	/**
-	 * Make a map maps any name to a set of ids where there is a occurrence of a
-	 * term with that id and expressed by that name
-	 * 
-	 * @param occurrences
-	 * @return a map
-	 */
-	public static Map<String, Set<String>> computeNameToIDs(List<TermOccurrence> occurrences) {
-		Map<String,Set<String>> dict = new HashMap<String, Set<String>>();
-		for (TermOccurrence ocr : occurrences) {
-			String id = ocr.id;
-			String name = ocr.name;
-			if (dict.containsKey(name)) {
-				dict.get(name).add(id);
-			}
-			else {
-				Set<String> ids = new HashSet<String>();
-				ids.add(id);
-				dict.put(name, ids);
-			}
-		}
-		
-		return dict;		
-	}
-	
-	
-	/**
-	 * Make a map maps any name to a list of occurrences of that name
-	 * 
-	 * @param occurrences
-	 * @return a map
-	 */
-	public static Map<String, List<TermOccurrence>> computeNameToOccrs(List<TermOccurrence> occurrences) {
-		Map<String, List<TermOccurrence>> dict = new HashMap<String, List<TermOccurrence>>();
-		for (TermOccurrence ocr : occurrences) {
-			String name = ocr.name;
-			if (dict.containsKey(name)) {
-				dict.get(name).add(ocr);
-			}
-			else {
-				List<TermOccurrence> ocrs = new ArrayList<TermOccurrence>();
-				ocrs.add(ocr);
-				dict.put(name, ocrs);
-			}
-		}
-		
-		return dict;		
-	}
-
-
 
 }
