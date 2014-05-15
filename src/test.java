@@ -84,7 +84,7 @@ public class test {
 		boolean task10 = false;
 		
 		// Compute TermOccrsSharingName: Map<Name, Map<TermID, Occrs>>
-		boolean task11 = false;
+		boolean taskOfFindingDuplicatedOccurrence = false;
 
 		
 		
@@ -94,23 +94,11 @@ public class test {
 		String outputFile = String.format("%s_Duplicated Terms_%d.txt", ontologyName, threshold);
 		
 		
-		if (task11) {
-			String output = findAllDupOccrs(CRAFTDir, ontologyName, winSize, threshold);
-			System.out.println(output);
-			
-			PrintWriter writer = null;
-			try {
-				writer = new PrintWriter(outputFile, "UTF-8");
-				writer.println(output);
-				writer.close();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}			
+		if (taskOfFindingDuplicatedOccurrence) {
+			writeDuplicatedOccurrenceToFile(CRAFTDir, ontologyName, winSize, threshold, outputFile);	
 		}
+		
+		
 		
 		if (task1) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
@@ -681,4 +669,38 @@ public class test {
 		return dupNametoIDs;
 	}
 
+	/**
+	 * Find all duplicated occurrences of terms where the the number of the term
+	 * appears in the corpus is above a threshold
+	 * 
+	 * @param CRAFTDir
+	 *            directory of CRAFT corpus
+	 * @param ontologyName
+	 *            name of the ontology
+	 * @param winSize
+	 *            size of sliding window
+	 * @param threshold
+	 *            threshold of number of occurrences
+	 * @param outputFile
+	 *            the directory and name of output file
+	 */
+	public static void writeDuplicatedOccurrenceToFile(String CRAFTDir,
+			String ontologyName, int winSize, int threshold, String outputFile) {
+		String output = findAllDupOccrs(CRAFTDir, ontologyName, winSize,
+				threshold);
+		System.out.println(output);
+
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter(outputFile, "UTF-8");
+			writer.println(output);
+			writer.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }
