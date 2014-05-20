@@ -45,21 +45,16 @@ import jci.UnannotatedArticle;
 public class test {
 
 	public static void main(String[] args) throws IOException {
-		// print parent-child pairs for each ontology
-		boolean task1 = false;
-		boolean task1_scatter = false;
+		// 1) print parent-child pairs for each ontology
+		// 2) plot log of # of context words of parent term vs. log of # of context words of child term 
+		boolean expOfParentChildPair = true;
+		
 		
 		// compute the # of terms for each ontology
-		boolean task2 = false;
-		
-		// test xChart
-		boolean task3 = false;
-		
-		// INLS 509
-		boolean task4 = false;
+		boolean expOfCountNumOfTerms = false;
 		
 		// make the mutation train arff file
-		boolean task5 = true;
+		boolean task5 = false;
 		List<Instance> mutationIns = new LinkedList<Instance>();
 		
 		// make the mutation unknown arff file
@@ -81,10 +76,9 @@ public class test {
 //		ontologyName = "PR";
 		ontologyName = "SO";
 		
-		boolean task10 = false;
 		
 		// Compute TermOccrsSharingName: Map<Name, Map<TermID, Occrs>>
-		boolean taskOfFindingDuplicatedOccurrence = false;
+		boolean expOfFindingDuplicatedOccurrence = false;
 
 		
 		
@@ -94,13 +88,15 @@ public class test {
 		String outputFile = String.format("%s_Duplicated Terms_%d.txt", ontologyName, threshold);
 		
 		
-		if (taskOfFindingDuplicatedOccurrence) {
+		// Find text strings that can be expressed by more than one terms, and write them into a file
+		if (expOfFindingDuplicatedOccurrence) {
 			writeDuplicatedOccurrenceToFile(CRAFTDir, ontologyName, winSize, threshold, outputFile);	
 		}
 		
+		// Find the parent-child pairs for each ontology
+		// Plot the log of # of parent term context words vs. the log of # of child term context words (base 2)",
 		
-		
-		if (task1) {
+		if (expOfParentChildPair) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
 			List<String> ids = myCRAFT.getArticleIDs();
@@ -115,18 +111,10 @@ public class test {
 						myArticle.getTermAndContextVector());
 			}
 			
-
-			
-//			termAndContextVector.keySet().i
-			
-
 			// print out all terms appear in the corpus
 			SortedSet<TermIDName> terms = new TreeSet<TermIDName>(
 					termAndContextVector.keySet());
 			for (TermIDName term : terms) {
-				if (term.getID().equals("chebi:9754")) {
-					System.out.println();
-				}
 				ContextVector value = termAndContextVector.get(term);
 				System.out.println(term.toString());
 				System.out.println(value.toString());
@@ -140,7 +128,6 @@ public class test {
 			while (iter.hasNext()) {
 				Entry<TermIDName, ContextVector> m = iter.next();
 				TermIDName t = m.getKey();
-				ContextVector cv = m.getValue();
 				String ID = t.getID();
 				System.out.println(ID);
 				if (StringUtils.equals(ID, "independent_continuant")) {
@@ -152,17 +139,8 @@ public class test {
 					String name2 = null;
 					ContextVector cv1 = null;
 					ContextVector cv2 = null;
-					Plotter myPlot = new Plotter();
+
 					for (String parent : term.is_a) {
-						// for (int i = 0; i < term.is_a.size(); i++) {
-						// String parent = term.is_a.
-						// System.out.println("[Parent Child Pair]");
-						// System.out.println("\t"+term.getID()+ " IS_A "
-						// +parent);
-						if (parent.equals("go:0016020"))
-							System.out.println();
-						boolean a = termAndContextVector
-								.containsKey(new TermIDName("go:0016020", ""));
 						if (termAndContextVector.containsKey(new TermIDName(
 								parent, ""))) {
 							System.out.println("[Parent Child Pair]");
@@ -182,21 +160,13 @@ public class test {
 							name2 = name2.replaceAll(":", "_");
 							name1 = parent;
 							name1 = name1.replaceAll(":", "_");
-
-							if (name1.equals("go_0000785")
-									&& name2.equals("go_0000790")) {
-								System.out.println();
-							}
-							
+			
 							cv1 = termAndContextVector.get(new TermIDName(
 									parent, ""));
 							cv2 = termAndContextVector.get(new TermIDName(term
 									.getID(), ""));
 
-//							myPlot.makeChart(name1, cv1, name2, cv2, "chart");
-							
 							double x = cv1.getCount();
-							
 							double y = cv2.getCount();
 							
 							x = Math.log(x) / Math.log(2);
@@ -208,24 +178,20 @@ public class test {
 					}
 				}
 			}
-			
-			if (task1_scatter) {
-				System.out.println("[Plot]");
-				Plotter myPlotter = new Plotter();
-				myPlotter.makeScatter(
-						"parent_vs_child_" + ontologyName.toUpperCase() + ".png", 
-						xData, 
-						yData,
-						ontologyName.toUpperCase() + " Parent-Child Pairs",
-						"log of # of parent term context words (base 2)",
-						"log of # of child term context words (base 2)",
-						ontologyName, 
-						true,
-						true);
-			}
-		}
 
-		if (task2) {
+			System.out.println("[Plot]");
+			Plotter myPlotter = new Plotter();
+			myPlotter.makeScatter(
+					"parent_vs_child_" + ontologyName.toUpperCase() + ".png",
+					xData, yData, ontologyName.toUpperCase()
+							+ " Parent-Child Pairs",
+					"log of # of parent term context words (base 2)",
+					"log of # of child term context words (base 2)",
+					ontologyName, true, true);
+		}		
+		
+
+		if (expOfCountNumOfTerms) {
 			// CHEBI
 			Biostar45366 appCHEBI = new Biostar45366();
 			appCHEBI.parse("C:\\Users\\Dongye\\Dropbox\\Phenoscape\\CRAFT corpus\\craft-1.0\\ontologies\\CHEBI.obo");
@@ -268,69 +234,19 @@ public class test {
 			int termNumSO = appSO.id2term.size();
 			System.out.println("[SO] " + termNumSO);
 		}
-
-		if (task3) {
-			List<Number> xData = new ArrayList<Number>();
-			List<Number> yData = new ArrayList<Number>();
-			Random random = new Random();
-			int size = 1000;
-			for (int i = 0; i < size; i++) {
-				xData.add(random.nextGaussian());
-				yData.add(random.nextGaussian());
-			}
-
-			// Create Chart
-			Chart chart = new Chart(800, 600);
-			chart.getStyleManager().setChartType(ChartType.Scatter);
-
-			// Customize Chart
-			chart.getStyleManager().setChartTitleVisible(false);
-			chart.getStyleManager().setLegendPosition(LegendPosition.InsideSW);
-
-			// Series
-			chart.addSeries("Gaussian Blob", xData, yData);
-			new SwingWrapper(chart).displayChart();
-		}
-		
-		if (task4) {
-			double[] recall = new double[] 
-					{ 1.0 / 7.0, 	2.0 / 7.0, 	2.0 / 7.0, 	4.0 / 7.0, 	4.0 / 7.0, 	6.0 / 7.0, 	6.0 / 7.0,	7.0 / 7.0 };
-			double[] precision = new double[] 
-					{ 1.0,     		1.0,     	4.0 / 5.0, 	4.0 / 5.0, 	3.0 / 4.0, 	3.0 / 4.0, 	7.0 / 10.0, 7.0 / 10.0 };
-
-			// Create Chart
-			Chart chart = QuickChart.getChart("Precision-Recall Curve",
-					"Recall", "Precision", "precision-recall curve", recall,
-					precision);
-
-			chart.getStyleManager().setXAxisMin(1.0 / 7.0);
-			chart.getStyleManager().setXAxisMax(1.0);
-			chart.getStyleManager().setYAxisMin(0);
-			chart.getStyleManager().setYAxisMax(1.0);
-			
-			// Show it
-			new SwingWrapper(chart).displayChart();
-
-			// Save it
-			BitmapEncoder.savePNG(chart, "./Sample_Chart.png");
-		}
-		
 		if (task5) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
 			List<String> ids = myCRAFT.getArticleIDs();
 			int windowSize = 10;
-			Map<TermIDName, ContextVector> termAndContextVector = new HashMap<TermIDName, ContextVector>();
+			
 			List<TermOccurrence> allOccurrences = new LinkedList<TermOccurrence>(); 
 			
 			List<TermOccurrence> mutationOcrs = new LinkedList<TermOccurrence>(); 
 			
 			// Get term so:0001059 (mutation/mutations)
 			String targetID1 = "so:0001059";
-			String targetID2 = "so:0000041";
-			Term mutation1 = myCRAFT.app.getTermById(targetID1, false);
-			Term mutation2 = myCRAFT.app.getTermById(targetID2, false);
-			
+			String targetID2 = "so:0000041";	
 			
 			
 			List<TermOccurrence> parentOcrs1 = new ArrayList<TermOccurrence>();
