@@ -1,5 +1,6 @@
+package exp;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,20 +20,12 @@ import jci.ContextVector;
 import jci.Term;
 import jci.TermIDName;
 
-public class Exp2 {
+public class ExpSet2 {
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-//		String ontologyName = "SO";
-//		ontologyName = "PR";
-		// ontologyName = "NCBITaxon"; NOT work
-//		ontologyName = "GO_CC";
-//		ontologyName = "GO_BPMF";
-//		ontologyName = "CL";
-//		ontologyName = "CHEBI";
-
 		List<String> ontologies = new ArrayList<String>();
 		ontologies.add("SO");
 		ontologies.add("PR");
@@ -40,19 +33,31 @@ public class Exp2 {
 		ontologies.add("GO_BPMF");
 		ontologies.add("CL");
 		ontologies.add("CHEBI");
-		
-		for (String ontologyName : ontologies) {
-		doExpForOneOntology(ontologyName);
-		}
-		
-	}
-	
-	public static void doExpForOneOntology(String ontologyName) {
-		String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
-		CRAFT myCRAFT = new CRAFT(dir, ontologyName);
-		List<String> ids = myCRAFT.getArticleIDs();
+
+		String CRAFTDir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 		int windowSize = 10;
 		int threshold = 50;
+		for (String ontologyName : ontologies) {
+			// Make plot of the ontology
+			doExpForOneOntology(ontologyName, CRAFTDir, windowSize, threshold);
+		}
+
+	}
+
+	/**
+	 * Plot Quantiles versus cosine similarity scores of pair of parent term and
+	 * child term for different distances of an ontology in CRAFT corpus
+	 * 
+	 * @param ontologyName
+	 * @param CRAFTDir
+	 * @param windowSize
+	 * @param threshold
+	 */
+	public static void doExpForOneOntology(String ontologyName,
+			String CRAFTDir, int windowSize, int threshold) {
+		String dir = CRAFTDir;
+		CRAFT myCRAFT = new CRAFT(dir, ontologyName);
+		List<String> ids = myCRAFT.getArticleIDs();
 
 		Plotter myPlot = new Plotter();
 
@@ -109,27 +114,10 @@ public class Exp2 {
 
 			Collections.sort(cosineSimilarityScores);
 
-			// System.out.println(cosineSimilarityScores.size());
-
-			// myPlot.makeQQPlot(
-			// "QQplot of cosine similarity scores between all pairs of terms.png",
-			// cosineSimilarityScores,
-			// "QQplot of cosine similarity scores between all pairs of terms",
-			// "Count", "cumulative scores",
-			// "cosine similarity scores between all pairs of terms",
-			// false, true);
-
 			double averagedCosineSimilarity = ListUtility
 					.computeAverage(cosineSimilarityScores);
 			System.out.println("averagedCosineSimilarity");
 			System.out.println(averagedCosineSimilarity);
-			
-			
-			
-			
-			
-			
-			
 
 			cosineSimilarityScoresAll.add(cosineSimilarityScores);
 			seriesNames[0] = "All vs. All";
@@ -141,25 +129,25 @@ public class Exp2 {
 		List<List<Double>> cosineSimilarityScoresList = new ArrayList<List<Double>>();
 
 		int i = 1;
-		
+
 		List<Number> depthNumbers = new ArrayList<Number>();
 		List<Number> sizes = new ArrayList<Number>();
 		List<Number> means = new ArrayList<Number>();
 		List<Number> standardDevs = new ArrayList<Number>();
-		
+
 		for (int d : depths) {
 			List<Double> cosineSimilarityScores = computeCosineSimilarityScoresWithDepthFixed(
 					termAndContextVector, myCRAFT.app.id2term, d, threshold);
-			
-			DescriptiveStatistics stat = new DescriptiveStatistics(); 
-			
+
+			DescriptiveStatistics stat = new DescriptiveStatistics();
+
 			int size = cosineSimilarityScores.size();
-			
+
 			if (size > 0) {
 				for (int j = 0; j < size; j++) {
 					stat.addValue(cosineSimilarityScores.get(j));
 				}
-				
+
 				sizes.add(size);
 
 				double mean = stat.getMean();
@@ -177,70 +165,10 @@ public class Exp2 {
 		}
 		cosineSimilarityScoresAll.addAll(cosineSimilarityScoresList);
 
-		// Print out averaged scores
-		// for (int i = 0; i < cosineSimilarityScoresList.size(); i++) {
-		// List<Double> cosineSimilarityScores =
-		// cosineSimilarityScoresList.get(i);
-		// Collections.sort(cosineSimilarityScores);
-		// if (i==12)
-		// System.out.println(i);
-		// if (cosineSimilarityScores.size() > 0) {
-		// myPlot.makeQQPlot(
-		// String.format("QQplot_depth_%d_threshold_%d.png",
-		// i + 1, threshold),
-		// cosineSimilarityScores,
-		// String.format(
-		// "QQplot of cosine similarity scores between terms and their ancestors of distance %d (Both the term and its ancestors have at least %d context words)",
-		// i + 1, threshold), "Count",
-		// "cumulative scores", "cosine similarity scores", false,
-		// true);
-		// double averagedScore = ListUtility
-		// .computeAverage(cosineSimilarityScores);
-		// System.out.println(String.format(
-		// "Depth: %d, averaged score: %f", i + 1, averagedScore));
-		// }
-		// }
-
 		myPlot.QQPlotWithNormal(String.format("%s_Q-Q plot.png", ontologyName),
 				cosineSimilarityScoresAll, String.format("%s", ontologyName),
-				"Quantiles", "Cosine similarity scores",
-				seriesNames, false, true);
-		
-//		// Plot # of pairs of terms available at a distance vs. distance
-//		myPlot.makePlot(String.format(
-//				"%s_# of pairs of terms vs. distance.png", ontologyName), 
-//				depthNumbers, 
-//				sizes,
-//				String.format("# of pairs of terms vs. distance (%s)", ontologyName), 
-//				"Distance",
-//				"# of pairs of terms",
-//				"# of pairs of terms", 
-//				false, 
-//				true);
-//		
-//		// Plot means vs. distance
-//		myPlot.makePlot(String.format(
-//				"%s_mean of cosine similarity scores vs. distance.png", ontologyName), 
-//				depthNumbers, 
-//				means,
-//				String.format("Mean of cosine similarity scores vs. distance (%s)", ontologyName), 
-//				"Distance",
-//				"mean of cosine similarity scores",
-//				"mean of cosine similarity scores", 
-//				false, 
-//				true);
-//
-//		// Plot standard deviation vs. distance
-//		myPlot.makePlot(String.format(
-//				"%s_standard deviation vs. distance.png", ontologyName), 
-//				depthNumbers, 
-//				standardDevs,
-//				String.format("Standard deviation vs. distance (%s)", ontologyName), 
-//				"Distance",
-//				"Standard deviation",
-//				"Standard deviation", 
-//				false, 
-//				true);
+				"Quantiles", "Cosine similarity scores", seriesNames, false,
+				true);
 	}
 
 	private static List<Double> computeCosineSimilarityScoresWithDepthFixed(

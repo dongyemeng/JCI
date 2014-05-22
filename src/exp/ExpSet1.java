@@ -1,3 +1,4 @@
+package exp;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -42,7 +43,7 @@ import jci.TermOccurrence;
 import jci.TextProcessor;
 import jci.UnannotatedArticle;
 
-public class test {
+public class ExpSet1 {
 
 	public static void main(String[] args) throws IOException {
 
@@ -58,17 +59,17 @@ public class test {
 		// SO: 0000041
 		boolean taskOfGenerateARFFFiles = false;
 
-		List<Instance> mutationIns = new LinkedList<Instance>();
-
-		// Make the count vs depth plot
+		// Make the averaged # of occurrence vs depth plot
 		boolean taskOfCountVSDepthPlot = false;
 
+		// Compute TermOccrsSharingName: Map<Name, Map<TermID, Occrs>>
+		boolean taskOfFindingDuplicatedOccurrence = false;
+
+		
 		// Name of ontology
 		String ontologyName = "";
 		ontologyName = "SO";
-
-		// Compute TermOccrsSharingName: Map<Name, Map<TermID, Occrs>>
-		boolean expOfFindingDuplicatedOccurrence = false;
+		List<Instance> mutationIns = new LinkedList<Instance>();
 		int winSize = 10;
 		String CRAFTDir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 		String unlabeledPapersDir = "C:/Users/Dongye/Documents/2013 fall/big data/project/articles/nxml/";
@@ -76,17 +77,16 @@ public class test {
 		String outputFile = String.format("%s_Duplicated Terms_%d.txt",
 				ontologyName, threshold);
 
-		// Tasks
 		// Find text strings that can be expressed by more than one terms, and
 		// write them into a file
-		if (expOfFindingDuplicatedOccurrence) {
+		if (taskOfFindingDuplicatedOccurrence) {
 			writeDuplicatedOccurrenceToFile(CRAFTDir, ontologyName, winSize,
 					threshold, outputFile);
 		}
 
 		// Find the parent-child pairs for each ontology
 		// Plot the log of # of parent term context words vs. the log of # of
-		// child term context words (base 2)",
+		// child term context words (base 2)"
 		if (taskOfParentChildPair) {
 			String dir = "C:/Users/Dongye/Dropbox/Phenoscape/CRAFT corpus/craft-1.0";
 			CRAFT myCRAFT = new CRAFT(dir, ontologyName);
