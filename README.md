@@ -1,7 +1,3 @@
-JCI
-===
-Java Interface of the Colorado Richly Annotated Full Text (CRAFT) corpus.
-
 This project includes the following experiments:
 
 + In ExpSet1.java
