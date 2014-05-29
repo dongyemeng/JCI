@@ -15,4 +15,6 @@ This project includes the following experiments:
 	- Make plot of 1uantiles versus cosine similarity scores of pair of parent term and child term for different distances of an ontology in CRAFT corpus
 	
 
+How to run:
+
 Run the main method in ExpSet1 and ExpSet2 class. To turn on an experiment, set the boolean variable of it be true before running.
